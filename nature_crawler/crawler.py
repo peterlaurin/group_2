@@ -10,6 +10,7 @@ import queue
 import json
 import sys
 import csv
+import numpy as np
 
 
 
@@ -111,7 +112,7 @@ def add_words(code, word_list, word_dict):
 
 
 
-def go(num_pages_to_crawl, course_map_filename, index_filename):
+def go(num_pages_to_crawl):
     '''
     Crawl the college catalog and generate a CSV file with an index.
 
@@ -125,53 +126,56 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
         CSV file of the index
     '''
 
-    
-
-    search_url = ("https://www.nature.com/search?article_type=protocols, \
-                   research,reviews&subject=")
     search_url = ('https://www.nature.com/search?article_type=protocols%2Cresearch%2Creviews&subject=')
     suffix = '&page='
     
-    limiting_domain = "https://www.nature.com"
+    home_domain = "https://www.nature.com"
 
     search_urls = []
 
     num_articles_per_field = 10
 
     num_pages_to_visit = int(np.ceil(num_articles_per_field / 50))
+    num_on_last_page = num_articles_per_field // 50
 
     fields = ['biological-sciences', 'business-and-commerce', 
               'earth-and-environmental-sciences','health-sciences',
               'humanities', 'physical-sciences', 
               'scientific-community-and-society','social-science']
 
+    paper_links = []
+
     for field in fields:
         for i in range(num_pages_to_visit):
             new_url = search_url + field + suffix + str(i + 1)
             search_urls.append(new_url)
-
-
-    
-    
-
-    link_queue = queue.Queue()
-    url_history = set()
-     
-    num_pages_to_visit = int(np.ceil(num_articles_per_field / 50))
-
-    #setup search for each field 
-    #link_queue.put(search_url, fields)
-
-    new_request = util.get_request(url)
-    html = util.read_request(new_request)
-    soup = bs4.BeautifulSoup(html, features = 'html.parser')
-    article_links = search_soup.find_all('h2', class_ = 'h3 extra-tight-line-height', itemprop = 'headline')
-
-    num_articles_extracted = 0
-
-    while num_articles_extracted < num_articles_per_field:
         
-        
+    for url in search_urls:
+        num_to_search = 50
+        if url[-1] == num_pages_to_visit:
+            num_to_search = num_on_last_page
+
+        new_request = util.get_request(url)
+        html = util.read_request(new_request)
+        search_soup = bs4.BeautifulSoup(html, features = 'html.parser')
+        article_links = search_soup.find_all('h2', class_ = 'h3 extra-tight-line-height', itemprop = 'headline')
+        assert len(article_links) == num_to_search
+        paper_links.extend([i.find('a')['href'] for i in article_links])
+
+    for i, link in enumerate(paper_links):
+        new_request = util.get_request(home_domain + link)
+        html = util.read_request(new_request)
+        article_soup = bs4.BeautifulSoup(html, features = 'html.parser')
+        print(i)
+
+
+
+    return paper_links
+
+
+
+
+'''
         html, visited_site = get_html(current_url)
         
         #add links to queue
@@ -194,7 +198,7 @@ def go(num_pages_to_crawl, course_map_filename, index_filename):
 
     #write csv
     write_csv(index_filename, word_dict)
-
+'''
 
 
 
