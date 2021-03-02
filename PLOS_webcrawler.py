@@ -28,37 +28,99 @@ def go(num_pages_to_crawl):
     urls_visited = set()
     starting_url = ("https://journals.plos.org/plosone/browse")
     limiting_domain = "journals.plos.org"
+    article_absolute_url = 'https://journals.plos.org/plosone/'
     
-    subject_urls_lst = get_PLOS_subject_urls(starting_url, limiting_domain)
+    subject_urls_lst = get_PLOS_subject_urls(starting_url) #add in limiting_domain?
 
     #iterate through subject areas
     #for loop counting max urls per subject to crawl
     #get all urls from page function => add to queue
-    max_urls_per_subject = math.floor(num_pages_to_crawl / 11)
+    max_pages_per_subject = math.floor(num_pages_to_crawl / 11)
     for subject_url in subject_urls_lst:
+        field = get_field(subject_url)
         subject_soup = get_soup_object(subject_url)
         current_url = subject_url
         urls_visited.add(current_url)
-        for _ in range(max_urls_per_subject):
+        for _ in range(max_pages_per_subject):
             soup_article_lst = subject_soup.find_all("h2", class_="title")
-
             for soup_article in soup_article_lst:
                 article_url = util.convert_if_relative_url(current_url, soup_article.find_all("a")[0]["href"])
-                if util.is_url_ok_to_follow(article_url, limiting_domain) \
-                    and article_url not in urls_visited:
+                if article_url not in urls_visited: #util.is_url_ok_to_follow(article_url, limiting_domain)
                     urls_visited.add(article_url)
                     #process page function
-            current_url = get_next_page(subject_soup, current_url) #function to find next page url
+            current_url = get_next_page(subject_soup, subject_url) #function to find next page url
             if not current_url:
                 break
-            #subject_soup = #
+            subject_soup = get_soup_object(current_url)
             urls_visited.add(current_url)
+    return urls_visited
 
+#c.execute('INSERT INTO AUTHORS (first_name, last_name, institution, field) VALUES (?, ?, ?, ?)', ('bob', 'smith', 'univ', 'field'))    
+def get_field(subject_url):
+    """
+    Finds the associated field from Nature based on PLOS One field.
+
+    Input: 
+        subject_url (string)
+    Returns:
+        field (string)
+    """
+    PLOS_field = subject_url.split('/')[-1]
+    if PLOS_field == 'biology_and_life_sciences':
+        field = 'Biological Sciences'
+    elif PLOS_field == 'computer_and_information_sciences':
+        field = 'Business and Commerce'
+    elif PLOS_field == 'earth_sciences' or PLOS_field == 'ecology_and_environmental_sciences':
+        field = 'Earth and Environmental Sciences'
+    elif PLOS_field == 'engineering_and_technology' or PLOS_field == 'physical_sciences':
+        field = 'Physical Sciences'
+    elif PLOS_field == 'medicine_and_health_sciences':
+        field = 'Health Sciences':
+    elif PLOS_field == 'people_and_places' or PLOS_field == 'social_sciences':
+        field = 'Social Science'
+    else:
+        field = 'Scientific Community and Society"
+
+    return field
+ 
+
+def process_article(article_url, field):
+    """
+    First table: Authors
+Author identifier
+First name
+Last name
+Institution 
+
+paper key paper title year Journal field of study Number of authors
+
+
+    """
+    authors_table = []
+    article_soup = get_soup_object(article_url)
+    meta_name_soup = article_soup.find_all("meta", attrs={'name':'citation_author'})
+    meta_institution_soup = article_soup.find_all("meta", attrs={'name':'citation_author_institution'})
 
     
-def process_article(article_url):
-    """
-    """
+    for i, author_soup in enumerate(meta_name_soup):
+        entry = tuple()
+        author_name = author_soup["content"]
+        names = author_name.split()
+        first_name = ''
+        for name in names[:-1]:
+            first_name += name
+        
+        inst_strings = meta_institution_soup[i]["content"] #need to figure out how to parse university, take whole string?
+        inst_strings = inst_strings.split(",")
+        for inst_string in inst_strings:
+            lower_inst_string = inst_string.lower()
+            #if 'university' in lower_inst_string or 'college' in lower
+        entry += (first_name,last_name, )
+
+
+
+
+
 
 def get_next_page(soup_object, current_url):
     """
@@ -71,14 +133,15 @@ def get_next_page(soup_object, current_url):
     Returns:
         next page url (string)
     """
-    #NOT WORKING
-    try:
-        next_page_url = soup_object.find_all("a", id="nextPageLink")[0]["href"]
+
+    next_page_url = soup_object.find_all("a", id="nextPageLink")
+    if next_page_url:
+        next_page_url = next_page_url[0]["href"]
         next_page_url = util.convert_if_relative_url(current_url, next_page_url)
-        print("hello")
         return next_page_url
-    except IndexError as i:
+    else:
         return None
+
     
 
     return next_page_url
@@ -101,7 +164,7 @@ def get_PLOS_subject_urls(starting_url):
     soup_subject_urls_lst = soup_dropdown_menu_lst[0].find_all("a")
     subject_urls_lst = []
     for a_tag in soup_subject_urls_lst[1:]:
-        url = util.convert_if_relative_url(current_url, a_tag["href"])
+        url = util.convert_if_relative_url(starting_url, a_tag["href"])
         subject_urls_lst.append(url)
 
     return subject_urls_lst
@@ -139,10 +202,8 @@ def create_sql_database(database_name):
     [rank] integer''')
     conn.commit()
 
-    #c.execute('INSERT INTO AUTHORS (first_name, last_name, institution, field) VALUES (?, ?, ?, ?)', ('bob', 'smith', 'univ', 'field'))
-def process_webpage(article_url):
-    """
-    """
+    #c.execute('INSERT INTO AUTHORS (first_name, last_name, institution) VALUES (?, ?, ?)', ('bob', 'smith', 'univ'))
+
 
 
 
