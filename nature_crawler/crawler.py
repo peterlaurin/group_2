@@ -13,6 +13,8 @@ import csv
 import numpy as np
 
 
+AFFILIATIONS = ['university', 'université', 'universität', 'ucla', 'universidad'
+, 'univ', 'università', 'institute']
 
 def get_good_url(current_url, new_url, limiting_domain, url_history):
     '''
@@ -169,15 +171,36 @@ def go(num_pages_to_crawl):
         article_soup = bs4.BeautifulSoup(html, features = 'html.parser')
         print(i)
         authors = article_soup.find_all('meta', {'name':'citation_author'})
-        for author in authors: 
-            
-            while 
-            name = author['content']
-            pot_inst = [i for ]
+        for rank, author in enumerate(authors): 
+            name = author['content'].split()
+            last_name = name.pop()
+            first_name = ' '.join(name)
+            institution_name = get_institution_name(author, authors)
+            #add rank, author
+
+
+        full_title = article_soup.find('title').text.split(' | ')
+        paper_title = full_title[0]
+        journal = full_title[1]
+        num_authors = len(authors)
+        #add journal info
+
+
+        
 
 
     return paper_links
 
+def get_institution_name(author, authors, pot_institution = ''):
+    while pot_institution not in authors:
+        if pot_institution == '\n':
+            continue
+        ins_list = institution['content'].lower().split(',')
+        for phrase in ins_list:
+            for word in AFFILIATIONS:
+                    if word in phrase:
+                        return institution_name
+        pot_institution = author.nextSibling
 
 
 
