@@ -163,11 +163,17 @@ def go(num_pages_to_crawl):
         paper_links.extend([i.find('a')['href'] for i in article_links])
 
     for i, link in enumerate(paper_links):
+        author_dict = {}
         new_request = util.get_request(home_domain + link)
         html = util.read_request(new_request)
         article_soup = bs4.BeautifulSoup(html, features = 'html.parser')
         print(i)
-
+        authors = article_soup.find_all('meta', {'name':'citation_author'})
+        for author in authors: 
+            
+            while 
+            name = author['content']
+            pot_inst = [i for ]
 
 
     return paper_links
