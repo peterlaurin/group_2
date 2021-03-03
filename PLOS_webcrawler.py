@@ -14,6 +14,8 @@ import csv
 import math
 import sqlite3
 
+AFFILIATIONS = ['university', 'université', 'universität', 'ucla', 'universidad', 'univ', 'università']
+
 def go(num_pages_to_crawl):
     '''
     Crawl the PLOS One and generate a database. Automatically samples even
@@ -25,6 +27,7 @@ def go(num_pages_to_crawl):
     Outputs:
         dictionary mapping author identifiers to list of variables
     '''
+    #create_sql_database("PLOS_One.db") #can only be run once
     urls_visited = set()
     starting_url = ("https://journals.plos.org/plosone/browse")
     limiting_domain = "journals.plos.org"
@@ -47,7 +50,7 @@ def go(num_pages_to_crawl):
                 article_url = util.convert_if_relative_url(current_url, soup_article.find_all("a")[0]["href"])
                 if article_url not in urls_visited: #util.is_url_ok_to_follow(article_url, limiting_domain)
                     urls_visited.add(article_url)
-                    #process page function
+                    process_article(article_url, field)#process page function
             current_url = get_next_page(subject_soup, subject_url) #function to find next page url
             if not current_url:
                 break
@@ -75,11 +78,11 @@ def get_field(subject_url):
     elif PLOS_field == 'engineering_and_technology' or PLOS_field == 'physical_sciences':
         field = 'Physical Sciences'
     elif PLOS_field == 'medicine_and_health_sciences':
-        field = 'Health Sciences':
+        field = 'Health Sciences'
     elif PLOS_field == 'people_and_places' or PLOS_field == 'social_sciences':
         field = 'Social Science'
     else:
-        field = 'Scientific Community and Society"
+        field = 'Scientific Community and Society'
 
     return field
  
@@ -96,6 +99,8 @@ paper key paper title year Journal field of study Number of authors
 
 
     """
+    conn = sqlite3.connect("PLOS_One.db")
+    c = conn.cursor()
     authors_table = []
     article_soup = get_soup_object(article_url)
     meta_name_soup = article_soup.find_all("meta", attrs={'name':'citation_author'})
@@ -108,18 +113,25 @@ paper key paper title year Journal field of study Number of authors
         names = author_name.split()
         first_name = ''
         for name in names[:-1]:
-            first_name += name
-        
-        inst_strings = meta_institution_soup[i]["content"] #need to figure out how to parse university, take whole string?
+            first_name += name + " "
+        first_name = first_name.strip()
+        last_name = names[-1]
+
+        inst_strings = meta_institution_soup[i]["content"] #out of index error
         inst_strings = inst_strings.split(",")
+        institution = ''
         for inst_string in inst_strings:
             lower_inst_string = inst_string.lower()
-            #if 'university' in lower_inst_string or 'college' in lower
-        entry += (first_name,last_name, )
-
-
-
-
+            for affiliation_word in AFFILIATIONS:
+                if affiliation_word in lower_inst_string:
+                    institution = lower_inst_string
+                    break
+            
+        entry += (first_name, last_name, institution)
+        print(entry)
+        c.execute('INSERT INTO AUTHORS (first_name, last_name, institution) VALUES (?, ?, ?)', entry)
+    c.commit()
+#c.execute('INSERT INTO AUTHORS (first_name, last_name, institution) VALUES (?, ?, ?)', ('bob', 'smith', 'univ'))
 
 
 def get_next_page(soup_object, current_url):
@@ -149,14 +161,14 @@ def get_next_page(soup_object, current_url):
 
 def get_PLOS_subject_urls(starting_url):
     """
-    Parses the PLOS starting url and extractst the
+    Parses the PLOS starting url and extracts the
     urls for each subject area.
 
     Inputs:
         starting_url (string)
 
     Returns:
-        list of urls for each subject areas in PLOS
+        list of urls for each subject area in PLOS
     
     """
     soup = get_soup_object(starting_url)
@@ -172,7 +184,7 @@ def get_PLOS_subject_urls(starting_url):
 def get_soup_object(url):
     """
     Takes a url, checks for possible redirection,
-    returns soup object
+    returns soup object.
 
     Inputs:
         url (string)
@@ -194,12 +206,9 @@ def create_sql_database(database_name):
     """
     conn = sqlite3.connect(database_name)
     c = conn.cursor()
-    c.execute('''CREATE TABLE AUTHORS ([author_identifier] INTEGER PRIMARY KEY, [first_name] text,
-     [last_name] text, [institution] text''')
-    c.execute('''CREATE TABLE PAPERS ([paper_identifier] INTEGER PRIMARY KEY, [title] text, 
-    [year] text, [journal] text, [field] text, [num_authors] integer)''')
-    c.execute('''CREATE TABLE AUTHOR_KEY_RANK ([author_identifier] integer, [paper_identifier] integer, 
-    [rank] integer''')
+    c.execute('''CREATE TABLE AUTHORS ([author_identifier] INTEGER PRIMARY KEY, [first_name] text, [last_name] text, [institution] text)''')
+    c.execute('''CREATE TABLE PAPERS ([paper_identifier] INTEGER PRIMARY KEY, [title] text, [year] text, [journal] text, [field] text, [num_authors] integer)''')
+    c.execute('''CREATE TABLE AUTHOR_KEY_RANK ([author_identifier] integer, [paper_identifier] integer, [rank] integer)''')
     conn.commit()
 
     #c.execute('INSERT INTO AUTHORS (first_name, last_name, institution) VALUES (?, ?, ?)', ('bob', 'smith', 'univ'))
