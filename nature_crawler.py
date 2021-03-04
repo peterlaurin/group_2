@@ -61,7 +61,7 @@ def nature_crawler(number_of_articles):
         
     for url in search_urls:
         num_to_search = 50
-        if url[-1] == num_pages_to_visit:
+        if int(url[-1]) == num_pages_to_visit:
             num_to_search = num_on_last_page
 
         new_request = util.get_request(url)
@@ -70,7 +70,7 @@ def nature_crawler(number_of_articles):
         article_links = search_soup.find_all('h2', 
                         class_ = 'h3 extra-tight-line-height', 
                         itemprop = 'headline')
-        assert len(article_links) == num_to_search
+        article_links = article_links[:num_to_search]
         paper_links.extend([i.find('a')['href'] for i in article_links])
 
     for i, link in enumerate(paper_links):
@@ -91,9 +91,13 @@ def nature_crawler(number_of_articles):
         try:
             c.execute('INSERT INTO papers(title, year, journal, field, num_authors) VALUES (?, ?, ?, ?, ?)', insert)
             conn.commit()
+            
         except: 
             print('error, insert not unique')
             continue
+
+        fetch = c.execute('SELECT paper_identifier FROM papers WHERE title = ?', (paper_title,))
+        paper_identifier = fetch.fetchone()[0]
 
         for rank, author in enumerate(authors): 
             try:
@@ -112,6 +116,14 @@ def nature_crawler(number_of_articles):
             except:
                 print('author already here')
                 continue
+            
+            fetch = c.execute('SELECT author_identifier FROM authors WHERE first_name = ? AND last_name = ?', (first_name, last_name))
+            author_identifier = fetch.fetchone()[0]
+            insert = (author_identifier, paper_identifier, rank)
+                
+            c.execute('INSERT INTO author_key_rank(author_identifier, paper_identifier, rank) VALUES (?, ?, ?)', insert)
+            conn.commit()
+                
         print(i)
 
 
