@@ -36,5 +36,7 @@ def get_gender(name):
     gender_neutral = soup.find_all("div", class_ = "name-box gender-neutral container page-section")
     if len(gender_neutral) != 0: 
         return "gender neutral"
+    
+    return 'unknown'
 
 
