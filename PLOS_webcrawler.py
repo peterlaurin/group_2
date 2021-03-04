@@ -13,8 +13,9 @@ import sys
 import csv
 import math
 import sqlite3
+import gender
 
-AFFILIATIONS = ['university', 'université', 'universität', 'ucla', 'universidad', 'univ', 'università']
+AFFILIATIONS = ['university', 'université', 'universität', 'ucla', 'universidad', 'univ', 'università', 'school']
 
 def go(num_pages_to_crawl):
     '''
@@ -96,42 +97,121 @@ Last name
 Institution 
 
 paper key paper title year Journal field of study Number of authors
-
-
     """
-    conn = sqlite3.connect("PLOS_One.db")
+    conn = sqlite3.connect("test.db")
     c = conn.cursor()
-    authors_table = []
+    
     article_soup = get_soup_object(article_url)
+    num_authors = len(article_soup.find_all("meta", attrs = {"name" : "citation_author"}))
+    paper_identifier = add_paper_table_entry(article_soup, field, num_authors, conn, c)
+    add_authors_table_entry(article_soup, paper_identifier, conn, c)
+
+    conn.close()
+"""
     meta_name_soup = article_soup.find_all("meta", attrs={'name':'citation_author'})
     meta_institution_soup = article_soup.find_all("meta", attrs={'name':'citation_author_institution'})
 
-    
+    print(article_url)
     for i, author_soup in enumerate(meta_name_soup):
         entry = tuple()
-        author_name = author_soup["content"]
-        names = author_name.split()
-        first_name = ''
-        for name in names[:-1]:
-            first_name += name + " "
-        first_name = first_name.strip()
-        last_name = names[-1]
+        author_name = author_soup["content"].split()
+        last_name = author_name.pop()
+        first_name = ' '.join(author_name)
 
         inst_strings = meta_institution_soup[i]["content"] #out of index error
-        inst_strings = inst_strings.split(",")
-        institution = ''
-        for inst_string in inst_strings:
-            lower_inst_string = inst_string.lower()
-            for affiliation_word in AFFILIATIONS:
-                if affiliation_word in lower_inst_string:
-                    institution = lower_inst_string
-                    break
-            
-        entry += (first_name, last_name, institution)
+        institution = get_institution_name(inst_strings)
+
+        author_gender = gender.get_gender(author_name[0].lower())
+        
+        entry += (first_name, last_name, institution, author_gender)
         print(entry)
-        c.execute('INSERT INTO AUTHORS (first_name, last_name, institution) VALUES (?, ?, ?)', entry)
-    c.commit()
-#c.execute('INSERT INTO AUTHORS (first_name, last_name, institution) VALUES (?, ?, ?)', ('bob', 'smith', 'univ'))
+        #c.execute('INSERT INTO AUTHORS (first_name, last_name, institution, gender) VALUES (?, ?, ?, ?)', entry)
+        #c.commit()
+"""
+
+def add_paper_table_entry(article_soup, field, num_authors, conn, c):
+    """
+    """
+    title = article_soup.find_all("meta", attrs={"name": "citation_title"})[0]["content"]
+    date = article_soup.find_all("meta", attrs={"name": "citation_date"})[0]["content"].split()[-1]
+    journal = "PLOS One"
+    entry = (title, date, journal, field, num_authors)
+    c.execute('INSERT INTO papers (title, year, journal, field, num_authors) VALUES (?, ?, ?, ?, ?)', entry)
+    conn.commit()
+
+    paper_identifier = c.execute("select paper_identifier from papers where title = ?", (title,)).fetchall()[0][0]
+    conn.commit()
+    return paper_identifier
+
+
+def add_authors_table_entry(article_soup, paper_identifier, conn, c):
+    """
+    """
+    num_authors = len(article_soup.find_all("meta", attrs = {"name" : "citation_author"}))
+    citation_soup = article_soup.find_all("meta", attrs = {'name':'citation_doi'})[0]
+    institution = ""
+    authors_added = 0
+    entry = tuple()
+    author_gender = ""
+    find_institution = False
+    while authors_added < num_authors:
+        citation_soup = citation_soup.nextSibling
+        if isinstance(citation_soup, str):#citation_soup.strip() == '\n' or citation_soup == '\n  ':
+            continue
+        elif citation_soup['name'] == 'citation_author':
+            if find_institution:
+                entry += ("", author_gender)
+                print(entry)
+                authors_added += 1
+                c.execute('INSERT INTO authors (first_name, last_name, institution, gender) VALUES (?, ?, ?, ?)', entry)
+                conn.commit()
+                author_identifier = c.execute("select author_identifier from authors where first_name = ? and last_name = ?", (first_name, last_name)).fetchall()[0][0]
+                conn.commit()
+                rank = authors_added
+                c.execute('INSERT INTO author_key_rank (author_identifier, paper_identifier,rank) VALUES (?, ?, ?)', (author_identifier, paper_identifier, rank) )
+                conn.commit()
+                find_institution = False
+                entry = tuple()
+            author_name = citation_soup["content"].split()
+            last_name = author_name.pop()
+            first_name = ' '.join(author_name)
+            print(first_name)
+            author_gender = gender.get_gender(author_name[0])
+            entry += (first_name, last_name)
+            find_institution = True
+        elif find_institution and citation_soup["name"] == "citation_author_institution":
+            institution = get_institution_name(citation_soup)
+            if institution:
+                entry += (institution.strip(), author_gender)
+                print(entry)
+                authors_added += 1
+                c.execute('INSERT INTO authors (first_name, last_name, institution, gender) VALUES (?, ?, ?, ?)', entry)
+                conn.commit()
+                author_identifier = c.execute("select author_identifier from authors where first_name = ? and last_name = ?", (first_name, last_name)).fetchall()[0][0]
+                conn.commit()
+                rank = authors_added
+                c.execute('INSERT INTO author_key_rank (author_identifier, paper_identifier,rank) VALUES (?, ?, ?)', (author_identifier, paper_identifier, rank) )
+                conn.commit()
+                find_institution = False
+                print(entry)
+                entry = tuple()
+                
+
+
+    
+
+def get_institution_name(citation_soup):
+    """
+    """
+    inst_strings = citation_soup["content"].lower().split(",")
+    institution = ''
+    for inst_string in inst_strings:
+        for affiliation_word in AFFILIATIONS:
+            if affiliation_word in inst_string:
+                institution = inst_string
+                return institution
+    
+    return ""
 
 
 def get_next_page(soup_object, current_url):
@@ -206,9 +286,9 @@ def create_sql_database(database_name):
     """
     conn = sqlite3.connect(database_name)
     c = conn.cursor()
-    c.execute('''CREATE TABLE AUTHORS ([author_identifier] INTEGER PRIMARY KEY, [first_name] text, [last_name] text, [institution] text)''')
-    c.execute('''CREATE TABLE PAPERS ([paper_identifier] INTEGER PRIMARY KEY, [title] text, [year] text, [journal] text, [field] text, [num_authors] integer)''')
-    c.execute('''CREATE TABLE AUTHOR_KEY_RANK ([author_identifier] integer, [paper_identifier] integer, [rank] integer)''')
+    c.execute('''CREATE TABLE authors ([author_identifier] INTEGER PRIMARY KEY, [first_name] text, [last_name] text, [institution] text, [gender] text, CONSTRAINT full_name UNIQUE (first_name, last_name))''')
+    c.execute('''CREATE TABLE papers ([paper_identifier] INTEGER PRIMARY KEY, [title] text UNIQUE, [year] text, [journal] text, [field] text, [num_authors] integer)''')
+    c.execute('''CREATE TABLE author_key_rank ([author_identifier] integer, [paper_identifier] integer, [rank] integer)''')
     conn.commit()
 
     #c.execute('INSERT INTO AUTHORS (first_name, last_name, institution) VALUES (?, ?, ?)', ('bob', 'smith', 'univ'))
