@@ -90,13 +90,12 @@ def get_field(subject_url):
 
 def process_article(article_url, field):
     """
-    First table: Authors
-Author identifier
-First name
-Last name
-Institution 
+    Processes an article from PLOS_One by adding entries from 
+    the article to all three tables (authors, papers and author_paper_rank).
 
-paper key paper title year Journal field of study Number of authors
+    Inputs:
+        article_url (string)
+        field (string)
     """
     conn = sqlite3.connect("test.db")
     c = conn.cursor()
@@ -107,30 +106,18 @@ paper key paper title year Journal field of study Number of authors
     add_authors_table_entry(article_soup, paper_identifier, conn, c)
 
     conn.close()
-"""
-    meta_name_soup = article_soup.find_all("meta", attrs={'name':'citation_author'})
-    meta_institution_soup = article_soup.find_all("meta", attrs={'name':'citation_author_institution'})
 
-    print(article_url)
-    for i, author_soup in enumerate(meta_name_soup):
-        entry = tuple()
-        author_name = author_soup["content"].split()
-        last_name = author_name.pop()
-        first_name = ' '.join(author_name)
-
-        inst_strings = meta_institution_soup[i]["content"] #out of index error
-        institution = get_institution_name(inst_strings)
-
-        author_gender = gender.get_gender(author_name[0].lower())
-        
-        entry += (first_name, last_name, institution, author_gender)
-        print(entry)
-        #c.execute('INSERT INTO AUTHORS (first_name, last_name, institution, gender) VALUES (?, ?, ?, ?)', entry)
-        #c.commit()
-"""
 
 def add_paper_table_entry(article_soup, field, num_authors, conn, c):
     """
+    Adds entry to the SQL paper table after retrieving the necesssary values.
+
+    Inputs:
+        article_soup (BeautifulSoup Object)
+        field (string)
+        num_authors (integer)
+        conn (sqlite3 connection)
+        c (sqlite3 cursor)
     """
     title = article_soup.find_all("meta", attrs={"name": "citation_title"})[0]["content"]
     date = article_soup.find_all("meta", attrs={"name": "citation_date"})[0]["content"].split()[-1]
@@ -156,7 +143,7 @@ def add_authors_table_entry(article_soup, paper_identifier, conn, c):
     find_institution = False
     while authors_added < num_authors:
         citation_soup = citation_soup.nextSibling
-        if isinstance(citation_soup, str):#citation_soup.strip() == '\n' or citation_soup == '\n  ':
+        if isinstance(citation_soup, str):
             continue
         elif citation_soup['name'] == 'citation_author':
             if find_institution:
@@ -197,11 +184,13 @@ def add_authors_table_entry(article_soup, paper_identifier, conn, c):
                 entry = tuple()
                 
 
-
-    
-
 def get_institution_name(citation_soup):
     """
+    Obtains the first string with an institution keyword affiliated with 
+    an author.
+
+    Inputs:
+        citation_soup (Soup Object)
     """
     inst_strings = citation_soup["content"].lower().split(",")
     institution = ''
@@ -233,10 +222,6 @@ def get_next_page(soup_object, current_url):
         return next_page_url
     else:
         return None
-
-    
-
-    return next_page_url
 
 
 def get_PLOS_subject_urls(starting_url):
