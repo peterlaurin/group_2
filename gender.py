@@ -1,21 +1,15 @@
 import bs4 
-import urllib.request
 import util
 from urllib.request import Request, urlopen
-import re
-import util
-import bs4
-import queue
-import json
-import sys
-import csv
-import math
-import sqlite3
+import unidecode
+
 
 
 def get_gender(name):
 
-    url = "https://www.names.org/n/" + name + "/about"
+    unaccented_name = unidecode.unidecode(name)
+
+    url = "https://www.names.org/n/" + unaccented_name + "/about"
     
     try:
         req = Request(url,headers={'User-Agent': 'Mozilla/5.0'})

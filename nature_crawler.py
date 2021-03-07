@@ -15,7 +15,7 @@ import gender
 
 
 AFFILIATIONS = ['university', 'université', 'universität', 'ucla', 'universidad'
-, 'univ', 'università', 'institute', 'college']
+, 'univ', 'università', 'institute', 'college', 'laboratory']
 
 
 def nature_crawler(number_of_articles):
@@ -104,18 +104,17 @@ def nature_crawler(number_of_articles):
                 name = author['content'].split()
                 last_name = name.pop()
                 first_name = ' '.join(name)
-                gen = gender.get_gender(name[0])
-                institution_name = get_institution_name(author, authors)
-                insert = (first_name, last_name, institution_name, gen)
+                gen = gender.get_gender(name[0].strip())
+                institution, country = get_institution_name(author, authors)
+                insert = (first_name, last_name, institution_name, gen, country)
             except:
                 print('unable to extract')
                 continue
             try:
-                c.execute('INSERT INTO authors(first_name, last_name, institution, gender) VALUES (?, ?, ?, ?)', insert)
+                c.execute('INSERT INTO authors(first_name, last_name, institution, gender, country) VALUES (?, ?, ?, ?, ?)', insert)
                 conn.commit()
             except:
                 print('author already here')
-                continue
             
             fetch = c.execute('SELECT author_identifier FROM authors WHERE first_name = ? AND last_name = ?', (first_name, last_name))
             author_identifier = fetch.fetchone()[0]
@@ -142,11 +141,12 @@ def get_institution_name(author, authors):
             continue
         ins_string = pot_institution['content']
         print(ins_string)
-        ins_list = ins_string.lower().split(',')
-        for phrase in ins_list:
-            for word in AFFILIATIONS:
-                    if word in phrase:
-                        return phrase
+        for word in AFFILIATIONS:
+            if word in ins_string:
+            ins_list = ins_string.lower().split(',')
+            country = ins_list[-1].strip()
+            institution = ins_list[-3].strip()
+            return institution, country
         pot_institution = pot_institution.nextSibling
     return ''
 
