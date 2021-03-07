@@ -123,8 +123,11 @@ def add_paper_table_entry(article_soup, field, num_authors, conn, c):
     date = article_soup.find_all("meta", attrs={"name": "citation_date"})[0]["content"].split()[-1]
     journal = "PLOS One"
     entry = (title, date, journal, field, num_authors)
-    c.execute('INSERT INTO papers (title, year, journal, field, num_authors) VALUES (?, ?, ?, ?, ?)', entry)
-    conn.commit()
+    try:
+        c.execute('INSERT INTO papers (title, year, journal, field, num_authors) VALUES (?, ?, ?, ?, ?)', entry)
+        conn.commit()
+    except:
+        print("error, paper insert not unique")
 
     paper_identifier = c.execute("select paper_identifier from papers where title = ?", (title,)).fetchall()[0][0]
     conn.commit()
@@ -143,46 +146,52 @@ def add_authors_table_entry(article_soup, paper_identifier, conn, c):
     find_institution = False
     while authors_added < num_authors:
         citation_soup = citation_soup.nextSibling
-        if isinstance(citation_soup, str):
+        print(citation_soup)
+        if isinstance(citation_soup, str) or not isinstance(citation_soup, bs4.element.Tag):
             continue
-        elif citation_soup['name'] == 'citation_author':
-            if find_institution:
-                entry += ("", author_gender)
-                print(entry)
-                authors_added += 1
-                c.execute('INSERT INTO authors (first_name, last_name, institution, gender) VALUES (?, ?, ?, ?)', entry)
-                conn.commit()
-                author_identifier = c.execute("select author_identifier from authors where first_name = ? and last_name = ?", (first_name, last_name)).fetchall()[0][0]
-                conn.commit()
-                rank = authors_added
-                c.execute('INSERT INTO author_key_rank (author_identifier, paper_identifier,rank) VALUES (?, ?, ?)', (author_identifier, paper_identifier, rank) )
-                conn.commit()
-                find_institution = False
-                entry = tuple()
-            author_name = citation_soup["content"].split()
-            last_name = author_name.pop()
-            first_name = ' '.join(author_name)
-            print(first_name)
-            author_gender = gender.get_gender(author_name[0])
-            entry += (first_name, last_name)
-            find_institution = True
-        elif find_institution and citation_soup["name"] == "citation_author_institution":
-            institution = get_institution_name(citation_soup)
-            if institution:
-                entry += (institution.strip(), author_gender)
-                print(entry)
-                authors_added += 1
-                c.execute('INSERT INTO authors (first_name, last_name, institution, gender) VALUES (?, ?, ?, ?)', entry)
-                conn.commit()
-                author_identifier = c.execute("select author_identifier from authors where first_name = ? and last_name = ?", (first_name, last_name)).fetchall()[0][0]
-                conn.commit()
-                rank = authors_added
-                c.execute('INSERT INTO author_key_rank (author_identifier, paper_identifier,rank) VALUES (?, ?, ?)', (author_identifier, paper_identifier, rank) )
-                conn.commit()
-                find_institution = False
-                print(entry)
-                entry = tuple()
+        elif citation_soup.has_attr("name"):
+            if citation_soup['name'] == 'citation_author':
+                if find_institution:
+                    entry += ("", author_gender)
+                    print(entry)
+                    authors_added += 1
+                    entry = insert_entry_sql(conn, c, authors_added, entry, paper_identifier)
+                    find_institution = False
+                author_name = citation_soup["content"].split()
+                last_name = author_name.pop()
+                first_name = ' '.join(author_name)
+                print(first_name)
+                author_gender = gender.get_gender(author_name[0])
+                entry += (first_name, last_name)
+                find_institution = True
+            elif find_institution and citation_soup["name"] == "citation_author_institution":
+                institution = get_institution_name(citation_soup)
+                if institution:
+                    entry += (institution.strip(), author_gender)
+                    print(entry)
+                    authors_added += 1
+                    entry = insert_entry_sql(conn, c, authors_added, entry, paper_identifier)
+                    find_institution = False
                 
+def insert_entry_sql(conn, c, authors_added, entry, paper_identifier):
+    """
+    Tries to insert an entry into the table authors and author_key_rank database.
+
+    """
+    try:
+        c.execute('INSERT INTO authors (first_name, last_name, institution, gender) VALUES (?, ?, ?, ?)', entry)
+        conn.commit()
+    except:
+        print('error, author insert not unique')
+
+    author_identifier = c.execute("select author_identifier from authors where first_name = ? and last_name = ?", (entry[0], entry[1])).fetchall()[0][0]
+    rank = authors_added
+    c.execute('INSERT INTO author_key_rank (author_identifier, paper_identifier,rank) VALUES (?, ?, ?)', (author_identifier, paper_identifier, rank) )
+    conn.commit()
+    find_institution = False
+    entry = tuple()
+    return entry
+
 
 def get_institution_name(citation_soup):
     """
