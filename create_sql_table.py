@@ -2,6 +2,7 @@
 # Creates SQL database with three tables (authors, papers, author_key_rank)
 #
 #
+import sqlite3
 
 def create_sql_database(database_name):
     """
@@ -14,3 +15,4 @@ def create_sql_database(database_name):
     c.execute('''CREATE TABLE papers ([paper_identifier] INTEGER PRIMARY KEY, [title] text UNIQUE, [year] text, [journal] text, [field] text, [num_authors] integer)''')
     c.execute('''CREATE TABLE author_key_rank ([author_identifier] integer, [paper_identifier] integer, [rank] integer)''')
     conn.commit()
+    conn.close()
