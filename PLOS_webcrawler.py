@@ -15,9 +15,9 @@ import math
 import sqlite3
 import gender
 
-AFFILIATIONS = ['university', 'université', 'universität', 'ucla', 'universidad', 'univ', 'università', 'school']
+AFFILIATIONS = ['university', 'université', 'universität', 'ucla', 'universidad', 'univ', 'università', 'school', 'laboratory']
 
-def go(num_pages_to_crawl):
+def go(num_articles_to_crawl):
     '''
     Crawl the PLOS One and generate a database. Automatically samples even
     number of articles from each subject area based on num_pages_to_crawl.
@@ -28,38 +28,35 @@ def go(num_pages_to_crawl):
     Outputs:
         dictionary mapping author identifiers to list of variables
     '''
-    #create_sql_database("PLOS_One.db") #can only be run once
     urls_visited = set()
     starting_url = ("https://journals.plos.org/plosone/browse")
     limiting_domain = "journals.plos.org"
     article_absolute_url = 'https://journals.plos.org/plosone/'
     
-    subject_urls_lst = get_PLOS_subject_urls(starting_url) #add in limiting_domain?
-
-    #iterate through subject areas
-    #for loop counting max urls per subject to crawl
-    #get all urls from page function => add to queue
-    max_pages_per_subject = math.floor(num_pages_to_crawl / 11)
+    subject_urls_lst = get_PLOS_subject_urls(starting_url) 
+    num_articles_per_field = num_articles_to_crawl / 11
+    num_pages_per_field = math.ceil(num_articles_per_field / 13)
+  
     for subject_url in subject_urls_lst:
         field = get_field(subject_url)
         subject_soup = get_soup_object(subject_url)
         current_url = subject_url
         urls_visited.add(current_url)
-        for _ in range(max_pages_per_subject):
+        for _ in range(num_pages_per_field):
             soup_article_lst = subject_soup.find_all("h2", class_="title")
             for soup_article in soup_article_lst:
                 article_url = util.convert_if_relative_url(current_url, soup_article.find_all("a")[0]["href"])
-                if article_url not in urls_visited: #util.is_url_ok_to_follow(article_url, limiting_domain)
+                if article_url not in urls_visited: 
                     urls_visited.add(article_url)
-                    process_article(article_url, field)#process page function
-            current_url = get_next_page(subject_soup, subject_url) #function to find next page url
+                    process_article(article_url, field)
+            current_url = get_next_page(subject_soup, subject_url) 
             if not current_url:
                 break
             subject_soup = get_soup_object(current_url)
             urls_visited.add(current_url)
-    return urls_visited
+    return 
 
-#c.execute('INSERT INTO AUTHORS (first_name, last_name, institution, field) VALUES (?, ?, ?, ?)', ('bob', 'smith', 'univ', 'field'))    
+
 def get_field(subject_url):
     """
     Finds the associated field from Nature based on PLOS One field.
@@ -103,7 +100,12 @@ def process_article(article_url, field):
     article_soup = get_soup_object(article_url)
     num_authors = len(article_soup.find_all("meta", attrs = {"name" : "citation_author"}))
     paper_identifier = add_paper_table_entry(article_soup, field, num_authors, conn, c)
-    add_authors_table_entry(article_soup, paper_identifier, conn, c)
+    try:
+        add_authors_table_entry(article_soup, paper_identifier, conn, c)
+    except:
+        print('error, problem with adding authors')
+        conn.close()
+        return
 
     conn.close()
 
@@ -136,23 +138,32 @@ def add_paper_table_entry(article_soup, field, num_authors, conn, c):
 
 def add_authors_table_entry(article_soup, paper_identifier, conn, c):
     """
+    Parses article to find (first_name, last_name, institution, gender, country) for entry
+    to authors table. Also adds entry to author_key_rank table for each author found.
+
+    Inputs:
+        article_soup (BeautifulSoup object)
+        paper_identifier (integer)
+        conn (sqlite3 connection)
+        c (sqlite3 cursor)
     """
     num_authors = len(article_soup.find_all("meta", attrs = {"name" : "citation_author"}))
     citation_soup = article_soup.find_all("meta", attrs = {'name':'citation_doi'})[0]
     institution = ""
+    author_gender = ""
     authors_added = 0
     entry = tuple()
-    author_gender = ""
     find_institution = False
+
     while authors_added < num_authors:
         citation_soup = citation_soup.nextSibling
-        print(citation_soup)
         if isinstance(citation_soup, str) or not isinstance(citation_soup, bs4.element.Tag):
             continue
         elif citation_soup.has_attr("name"):
             if citation_soup['name'] == 'citation_author':
                 if find_institution:
-                    entry += ("", author_gender)
+                    institution, country = get_institution_name_and_country(None)
+                    entry += (institution, author_gender, country)
                     print(entry)
                     authors_added += 1
                     entry = insert_entry_sql(conn, c, authors_added, entry, paper_identifier)
@@ -160,26 +171,33 @@ def add_authors_table_entry(article_soup, paper_identifier, conn, c):
                 author_name = citation_soup["content"].split()
                 last_name = author_name.pop()
                 first_name = ' '.join(author_name)
-                print(first_name)
                 author_gender = gender.get_gender(author_name[0])
                 entry += (first_name, last_name)
                 find_institution = True
             elif find_institution and citation_soup["name"] == "citation_author_institution":
-                institution = get_institution_name(citation_soup)
-                if institution:
-                    entry += (institution.strip(), author_gender)
-                    print(entry)
-                    authors_added += 1
-                    entry = insert_entry_sql(conn, c, authors_added, entry, paper_identifier)
-                    find_institution = False
-                
+                institution, country = get_institution_name_and_country(citation_soup)
+                entry += (institution.strip(), author_gender, country)
+                print(entry)
+                authors_added += 1
+                entry = insert_entry_sql(conn, c, authors_added, entry, paper_identifier)
+                find_institution = False
+
+
 def insert_entry_sql(conn, c, authors_added, entry, paper_identifier):
     """
     Tries to insert an entry into the table authors and author_key_rank database.
 
+    Inputs:
+        conn (sqlite3 connection)
+        c (sqlite3 cursor)
+        authors_added (integer)
+        entry (tuple with (first_name, last_name, institution, gender, country))
+
+    Returns:
+        empty tuple
     """
     try:
-        c.execute('INSERT INTO authors (first_name, last_name, institution, gender) VALUES (?, ?, ?, ?)', entry)
+        c.execute('INSERT INTO authors (first_name, last_name, institution, gender, country) VALUES (?, ?, ?, ?, ?)', entry)
         conn.commit()
     except:
         print('error, author insert not unique')
@@ -193,23 +211,27 @@ def insert_entry_sql(conn, c, authors_added, entry, paper_identifier):
     return entry
 
 
-def get_institution_name(citation_soup):
+def get_institution_name_and_country(citation_soup):
     """
     Obtains the first string with an institution keyword affiliated with 
-    an author.
+    an author and the country.
 
     Inputs:
         citation_soup (Soup Object)
     """
-    inst_strings = citation_soup["content"].lower().split(",")
-    institution = ''
-    for inst_string in inst_strings:
-        for affiliation_word in AFFILIATIONS:
-            if affiliation_word in inst_string:
-                institution = inst_string
-                return institution
-    
-    return ""
+    if citation_soup is not None:
+        inst_strings = citation_soup["content"].lower().split(",")
+        institution = ''
+        country = inst_strings[-1].strip()
+        for inst_string in inst_strings:
+            for affiliation_word in AFFILIATIONS:
+                if affiliation_word in inst_string:
+                    institution = inst_string
+                    return institution, country
+        
+        return "", country
+    else:
+        return "", ""
 
 
 def get_next_page(soup_object, current_url):
@@ -273,19 +295,6 @@ def get_soup_object(url):
 
     return soup
 
-def create_sql_database(database_name):
-    """
-    Creates the three table schemas for the SQL database: AUTHORS, 
-    PAPERS, and AUTHOR_KEY_RANK.
-    """
-    conn = sqlite3.connect(database_name)
-    c = conn.cursor()
-    c.execute('''CREATE TABLE authors ([author_identifier] INTEGER PRIMARY KEY, [first_name] text, [last_name] text, [institution] text, [gender] text, CONSTRAINT full_name UNIQUE (first_name, last_name))''')
-    c.execute('''CREATE TABLE papers ([paper_identifier] INTEGER PRIMARY KEY, [title] text UNIQUE, [year] text, [journal] text, [field] text, [num_authors] integer)''')
-    c.execute('''CREATE TABLE author_key_rank ([author_identifier] integer, [paper_identifier] integer, [rank] integer)''')
-    conn.commit()
-
-    #c.execute('INSERT INTO AUTHORS (first_name, last_name, institution) VALUES (?, ?, ?)', ('bob', 'smith', 'univ'))
 
 
 
