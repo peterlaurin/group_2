@@ -29,6 +29,10 @@ def get_paper_links(number_of_articles, fields):
     Output:
     paper_links, list of paper urls (str)
     '''
+    search_url = ('https://www.nature.com/search?article_type=protocols\
+                   %2Cresearch%2Creviews&subject=')
+    suffix = '&page='
+    
     search_urls = []
     paper_links = []
 
@@ -104,10 +108,6 @@ def nature_crawler(number_of_articles):
 
     conn = sqlite3.connect('journals.db')
     c = conn.cursor()
-
-    search_url = ('https://www.nature.com/search?article_type=protocols\
-                  %2Cresearch%2Creviews&subject=')
-    suffix = '&page='
     
     home_domain = "https://www.nature.com"
 
@@ -122,24 +122,29 @@ def nature_crawler(number_of_articles):
 
 
     for i, link in enumerate(paper_links):
-        new_request = util.get_request(home_domain + link)
-        html = util.read_request(new_request)
-        article_soup = bs4.BeautifulSoup(html, features = 'html.parser')
-        authors = article_soup.find_all('meta', {'name':'citation_author'})
 
-        #process paper
+        try:
+            new_request = util.get_request(home_domain + link)
+            html = util.read_request(new_request)
+            article_soup = bs4.BeautifulSoup(html, features = 'html.parser')
+            authors = article_soup.find_all('meta', {'name':'citation_author'})
 
-        full_title = article_soup.find('title').text.split(' | ')
-        paper_title = full_title[0]
-        print(paper_title)
-        journal = full_title[1]
-        num_authors = len(authors)
-        year_find = article_soup.find('meta', {'name':'dc.date'})['content']
-        year = year_find.split('-')[0]
-        num_articles_per_field = number_of_articles // 8
-        field_index = int(np.ceil(i // num_articles_per_field))
-        field = fields[field_index]
-        insert = (paper_title, year, journal, field, num_authors)
+            #process paper
+
+            full_title = article_soup.find('title').text.split(' | ')
+            paper_title = full_title[0]
+            print(paper_title)
+            journal = full_title[1]
+            num_authors = len(authors)
+            year_find = article_soup.find('meta', {'name':'dc.date'})['content']
+            year = year_find.split('-')[0]
+            num_articles_per_field = number_of_articles // 8
+            field_index = int(np.ceil(i // num_articles_per_field))
+            field = fields[field_index]
+            insert = (paper_title, year, journal, field, num_authors)
+        except:
+            print('paper extraction failed')
+            continue
 
         try:
             c.execute('INSERT INTO papers(title, year, journal, field, \
@@ -147,7 +152,7 @@ def nature_crawler(number_of_articles):
             conn.commit()
             
         except: 
-            print('error, insert not unique')
+            print('error, insert already in database')
             continue
 
         fetch = c.execute('SELECT paper_identifier FROM papers WHERE \
