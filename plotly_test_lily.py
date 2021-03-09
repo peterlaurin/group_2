@@ -7,9 +7,27 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
+"""
+Gender percent breakdown by countries with > 10 authors
+"""
+
 conn = sqlite3.connect('test.db')
 sql_query = pd.read_sql_query('''select * from authors''', conn)
 df = pd.DataFrame(sql_query, columns = ['author_identifier', 'first_name', 'last_name', 'institution', 'gender', 'country'])
+
+df_gc = df.groupby(['gender','country']).size().to_frame('count').reset_index() #worked
+countries10 = df_gc[df_gc['count']>10].reset_index(drop=True)
+df = df.reset_index(drop=True) 
+
+df_10c = df.merge(countries10['country'], on = 'country').reset_index(drop = True)
+grpd = df_10c.groupby(['gender','country']).size().to_frame('count').reset_index()
+
+country_gender = grpd.groupby(['country', 'gender']).agg({'count':'sum'})
+country_pcts = country_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))
+country_pcts.reset_index(inplace = True)
+
+fig = px.bar(country_pcts, x="country", y="count", color="gender", title="Gender breakdown by countries with > 10 authors")
+fig.show()
 
 #sql to pandas with gender and country counts
 #sql_query1 = pd.read_sql_query('''select country, gender, count(*) from authors group by country, gender''', conn)
@@ -37,15 +55,23 @@ grpd = df_10c.groupby(['gender','country']).size().to_frame('count').reset_index
 
  #df[df['country'] == countries10['country']] #Value Error
 
-fig = px.bar(grpd, x="country", y="percent", color="gender", title="Gender breakdown by countries with > 10 authors")
-fig.show()
+
 
 #only returned single col of 45 rows??
 
 #df['sales'] / df.groupby('state')['sales'].transform('sum')
 
 #https://stackoverflow.com/questions/23377108/pandas-percentage-of-total-with-groupby
-state_office = df.groupby(['state', 'office_id']).agg({'sales': 'sum'}) # Change: groupby state_office and divide by sum
-country_gender = grpd.groupby(['country']).agg({'count':'sum'})
-state_pcts = state_office.groupby(level=0).apply(lambda x: 100 * x / float(x.sum()))
+#state_office = df.groupby(['state', 'office_id']).agg({'sales': 'sum'}) # Change: groupby state_office and divide by sum
+country_gender = grpd.groupby(['country', 'gender']).agg({'count':'sum'})
+#state_pcts = state_office.groupby(level=0).apply(lambda x: 100 * x / float(x.sum()))
 country_pcts = country_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))
+country_pcts.reset_index(inplace = True)
+
+fig = px.bar(country_pcts, x="country", y="count", color="gender", title="Gender breakdown by countries with > 10 authors")
+fig.show()
+
+"""
+Per field: percent women authors vs. rank
+"""
+
