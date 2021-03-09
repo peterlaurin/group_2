@@ -30,9 +30,6 @@ def go(num_articles_to_crawl):
     '''
     urls_visited = set()
     starting_url = ("https://journals.plos.org/plosone/browse")
-    limiting_domain = "journals.plos.org"
-    article_absolute_url = 'https://journals.plos.org/plosone/'
-    
     subject_urls_lst = get_PLOS_subject_urls(starting_url) 
     num_articles_per_field = num_articles_to_crawl / 11
     num_pages_per_field = math.ceil(num_articles_per_field / 13)
@@ -68,19 +65,19 @@ def get_field(subject_url):
     """
     PLOS_field = subject_url.split('/')[-1]
     if PLOS_field == 'biology_and_life_sciences':
-        field = 'Biological Sciences'
+        field = 'biological-sciences'
     elif PLOS_field == 'computer_and_information_sciences':
-        field = 'Business and Commerce'
+        field = 'business-and-commerce'
     elif PLOS_field == 'earth_sciences' or PLOS_field == 'ecology_and_environmental_sciences':
-        field = 'Earth and Environmental Sciences'
+        field = 'earth-and-environmental-sciences'
     elif PLOS_field == 'engineering_and_technology' or PLOS_field == 'physical_sciences':
-        field = 'Physical Sciences'
+        field = 'physical-sciences'
     elif PLOS_field == 'medicine_and_health_sciences':
-        field = 'Health Sciences'
+        field = 'health-sciences'
     elif PLOS_field == 'people_and_places' or PLOS_field == 'social_sciences':
-        field = 'Social Science'
+        field = 'social-science'
     else:
-        field = 'Scientific Community and Society'
+        field = 'scientific-community-and-society'
 
     return field
  
@@ -206,7 +203,6 @@ def insert_entry_sql(conn, c, authors_added, entry, paper_identifier):
     rank = authors_added
     c.execute('INSERT INTO author_key_rank (author_identifier, paper_identifier,rank) VALUES (?, ?, ?)', (author_identifier, paper_identifier, rank) )
     conn.commit()
-    find_institution = False
     entry = tuple()
     return entry
 
@@ -290,7 +286,6 @@ def get_soup_object(url):
     """
     request = util.get_request(url) 
     html_text = util.read_request(request)
-    current_url = util.get_request_url(request)  #gets correct url in case of redirection
     soup = bs4.BeautifulSoup(html_text, 'html5lib')
 
     return soup
