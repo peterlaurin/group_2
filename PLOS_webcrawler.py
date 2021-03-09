@@ -17,7 +17,7 @@ import gender
 
 AFFILIATIONS = ['university', 'université', 'universität', 'ucla', 'universidad', 'univ', 'università', 'school', 'laboratory']
 
-def go(num_articles_to_crawl):
+def go(num_articles_to_crawl, start_page, database_name):
     '''
     Crawl the PLOS One and generate a database. Automatically samples even
     number of articles from each subject area based on num_pages_to_crawl.
@@ -30,12 +30,14 @@ def go(num_articles_to_crawl):
     '''
     urls_visited = set()
     starting_url = ("https://journals.plos.org/plosone/browse")
-    subject_urls_lst = get_PLOS_subject_urls(starting_url) 
+    subject_urls_lst = get_PLOS_subject_urls(starting_url)  
+
     num_articles_per_field = num_articles_to_crawl / 11
     num_pages_per_field = math.ceil(num_articles_per_field / 13)
   
     for subject_url in subject_urls_lst:
         field = get_field(subject_url)
+        subject_url += '?page=' + str(start_page)
         subject_soup = get_soup_object(subject_url)
         current_url = subject_url
         urls_visited.add(current_url)
@@ -45,12 +47,13 @@ def go(num_articles_to_crawl):
                 article_url = util.convert_if_relative_url(current_url, soup_article.find_all("a")[0]["href"])
                 if article_url not in urls_visited: 
                     urls_visited.add(article_url)
-                    process_article(article_url, field)
+                    process_article(article_url, field, database_name)
             current_url = get_next_page(subject_soup, subject_url) 
             if not current_url:
                 break
             subject_soup = get_soup_object(current_url)
             urls_visited.add(current_url)
+    
     return 
 
 
@@ -82,7 +85,7 @@ def get_field(subject_url):
     return field
  
 
-def process_article(article_url, field):
+def process_article(article_url, field, database_name):
     """
     Processes an article from PLOS_One by adding entries from 
     the article to all three tables (authors, papers and author_paper_rank).
@@ -91,7 +94,7 @@ def process_article(article_url, field):
         article_url (string)
         field (string)
     """
-    conn = sqlite3.connect("test.db")
+    conn = sqlite3.connect(database_name)
     c = conn.cursor()
     
     article_soup = get_soup_object(article_url)
@@ -202,6 +205,7 @@ def insert_entry_sql(conn, c, authors_added, entry, paper_identifier):
     author_identifier = c.execute("select author_identifier from authors where first_name = ? and last_name = ?", (entry[0], entry[1])).fetchall()[0][0]
     rank = authors_added
     c.execute('INSERT INTO author_key_rank (author_identifier, paper_identifier,rank) VALUES (?, ?, ?)', (author_identifier, paper_identifier, rank) )
+    print("author identifier", author_identifier, "paper identifier", paper_identifier)
     conn.commit()
     entry = tuple()
     return entry
