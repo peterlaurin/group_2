@@ -29,6 +29,55 @@ country_pcts.reset_index(inplace = True)
 fig = px.bar(country_pcts, x="country", y="count", color="gender", title="Gender breakdown by countries with > 10 authors")
 fig.show()
 
+"""
+Per field: percent women authors vs. rank
+"""
+conn = sqlite3.connect('test.db')
+sql_query = pd.read_sql_query('''select gender, rank from authors join author_key_rank on authors.author_identifier = author_key_rank.author_identifier''', conn)
+df = pd.DataFrame(sql_query, columns = ['gender', 'rank'])
+
+grp_df = df.groupby(['gender','rank']).size().to_frame('count').reset_index() #worked
+
+rank_gender = grp_df.groupby(['rank','gender']).agg({'count':'sum'})
+rank_pcts = rank_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))#need to change count column to percent column
+rank_pcts.reset_index(inplace = True)
+
+fig = px.bar(rank_pcts, x="rank", y="count", color="gender", title="Gender breakdown by rank")
+#fig.write_html('test.html', include_plotlyjs = False) #html code
+fig.show()
+
+"""
+Per field: percent women authors vs rank - 4+ category
+"""
+#create a 4+ table
+rank_gender.reset_index(inplace = True)
+df_4plus = rank_gender[rank_gender['rank'] > 4]
+df_4plus_agg = df_4plus.groupby('gender').agg({'count':'sum'})
+df_4plus_agg.reset_index(inplace = True)
+df_4plus_agg['rank'] = '4+'
+
+#create 1-3 table
+df_rest = rank_gender[rank_gender['rank'] < 4].reset_index(drop = True)
+
+#combine
+df_combined = pd.concat([df_rest, df_4plus_agg])
+
+#calculate percents
+grp_df_combined = df_combined.groupby(['rank', 'gender']).agg({'count':'sum'})
+
+rank_pcts = grp_df_combined.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))#need to change count column to percent column
+rank_pcts.reset_index(inplace = True)
+
+rank_pcts['rank'] = rank_pcts['rank'].apply(str)
+
+fig = px.bar(rank_pcts, x="rank", y="count", color="gender", title="Gender breakdown by rank", labels = {'count': "Percent %"})
+#fig.write_html('test.html', include_plotlyjs = False) #html code
+fig.show()
+
+"""
+Test code and notes
+"""
+
 #sql to pandas with gender and country counts
 #sql_query1 = pd.read_sql_query('''select country, gender, count(*) from authors group by country, gender''', conn)
 #df1 = pd.DataFrame(sql_query1, columns = ["country", "gender", "count"])
@@ -70,31 +119,3 @@ country_pcts.reset_index(inplace = True)
 
 fig = px.bar(country_pcts, x="country", y="count", color="gender", title="Gender breakdown by countries with > 10 authors")
 fig.show()
-
-"""
-Per field: percent women authors vs. rank
-"""
-conn = sqlite3.connect('test.db')
-sql_query = pd.read_sql_query('''select gender, rank from authors join author_key_rank on authors.author_identifier = author_key_rank.author_identifier''', conn)
-df = pd.DataFrame(sql_query, columns = ['gender', 'rank'])
-
-grp_df = df.groupby(['gender','rank']).size().to_frame('count').reset_index() #worked
-
-rank_gender = grp_df.groupby(['gender','rank']).agg({'count':'sum'})
-rank_pcts = rank_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))#need to change count column to percent column
-rank_pcts.reset_index(inplace = True)
-
-fig = px.bar(rank_pcts, x="rank", y="count", color="gender", title="Gender breakdown by rank")
-fig.write_html('test.html', include_plotlyjs = False) #html code
-fig.show()
-
-"""
-Per field: percent women authors vs rank - 4+ category
-"""
-#create new 4+ column 
-rank_gender.reset_index(inplace = True)
-rank_gender['4+'] = rank_gender['rank'] > 4
-rank_gender.groupby('rank').size()
-
-
-
