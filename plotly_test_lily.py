@@ -74,4 +74,15 @@ fig.show()
 """
 Per field: percent women authors vs. rank
 """
+conn = sqlite3.connect('test.db')
+sql_query = pd.read_sql_query('''select gender, rank from authors join author_key_rank on authors.author_identifier = author_key_rank.author_identifier''', conn)
+df = pd.DataFrame(sql_query, columns = ['gender', 'rank'])
 
+grp_df = df.groupby(['gender','rank']).size().to_frame('count').reset_index() #worked
+
+rank_gender = grp_df.groupby(['gender','rank']).agg({'count':'sum'})
+rank_pcts = rank_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))#need to change count column to percent column
+rank_pcts.reset_index(inplace = True)
+
+fig = px.bar(rank_pcts, x="rank", y="count", color="gender", title="Gender breakdown by rank")
+fig.show()
