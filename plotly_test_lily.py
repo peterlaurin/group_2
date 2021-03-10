@@ -85,4 +85,16 @@ rank_pcts = rank_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum
 rank_pcts.reset_index(inplace = True)
 
 fig = px.bar(rank_pcts, x="rank", y="count", color="gender", title="Gender breakdown by rank")
+fig.write_html('test.html', include_plotlyjs = False) #html code
 fig.show()
+
+"""
+Per field: percent women authors vs rank - 4+ category
+"""
+#create new 4+ column 
+rank_gender.reset_index(inplace = True)
+rank_gender['4+'] = rank_gender['rank'] > 4
+rank_gender.groupby('rank').size()
+
+
+
