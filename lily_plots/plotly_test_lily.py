@@ -30,7 +30,12 @@ fig = px.bar(country_pcts, x="country", y="count", color="gender", title="Gender
 fig.show()
 
 """
-Per field: percent women authors vs. rank
+
+"""
+
+
+"""
+ percent women authors vs. rank
 """
 conn = sqlite3.connect('test.db')
 sql_query = pd.read_sql_query('''select gender, rank from authors join author_key_rank on authors.author_identifier = author_key_rank.author_identifier''', conn)
@@ -47,8 +52,10 @@ fig = px.bar(rank_pcts, x="rank", y="count", color="gender", title="Gender break
 fig.show()
 
 """
-Per field: percent women authors vs rank - 4+ category
+percent women authors vs rank - 4+ category
 """
+
+
 #create a 4+ table
 rank_gender.reset_index(inplace = True)
 df_4plus = rank_gender[rank_gender['rank'] > 4]
@@ -73,6 +80,17 @@ rank_pcts['rank'] = rank_pcts['rank'].apply(str)
 fig = px.bar(rank_pcts, x="rank", y="count", color="gender", title="Gender breakdown by rank", labels = {'count': "Percent %"})
 #fig.write_html('test.html', include_plotlyjs = False) #html code
 fig.show()
+
+"""
+percent gender breakdown vs field
+"""
+
+conn = sqlite3.connect('test.db')
+sql_query = pd.read_sql_query('''select gender, field, count(*) from authors join author_key_rank on authors.author_identifier = author_key_rank.author_identifier join papers on author_key_rank.paper_identifier = papers.paper_identifier group by field, gender;
+''', conn)
+df = pd.DataFrame(sql_query, columns = ['gender', 'field', 'count'])# count didn't save
+
+
 
 """
 Test code and notes
