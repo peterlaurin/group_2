@@ -192,15 +192,6 @@ def nature_crawler(number_of_articles):
                 
         print(i)
 
-def remove_the():
-    conn = sqlite3.connect('journals.db')
-    c = conn.cursor()
-    the_list = c.execute("SELECT author_identifier, institution from authors WHERE institution LIKE 'the %';")
-    the_list = the_list.fetchall()
-    for author, inst in the_list:
-        new_inst = inst[4:]
-        c.execute('UPDATE authors SET institution = ? WHERE author_identifier = ?', (new_inst, author))
-        conn.commit()
 
 
 
