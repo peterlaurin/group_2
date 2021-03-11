@@ -18,4 +18,5 @@ def condense_US_entries(database_name):
     for author, country in lst_usa_entries:
         c.execute('UPDATE authors SET country = ? WHERE author_identifer = ?', ('united states of america', author))
     
-  
+
+#replace empty country with "not found"?
