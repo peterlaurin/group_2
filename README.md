@@ -2,6 +2,7 @@
 CS122 group project
 
 This project analyzes gender disparities across academic disciplines and institutions. We scrape authorship data from journal websites and article search engines, assign gender to author names, and analyze the distribution of gender in specific academic disciplines, institutions, and geographic regions. 
+You run this file runing "google-chrome website.html" in the terminal.    
 
 Group Members: 
 Lily Mansfield, 
@@ -10,6 +11,12 @@ Maxwell Kay,
 Sadie Morriss
 
 Files: 
+
+website.html: the html code for the wensite, with embedded javascript 
+
+make_js_plots_final.py: takes html for plots and extracts the javascript from them, writes a javascript file with each plot as a function, changes the div ids of the plots to match div ids from website.html 
+
+java_functions_final.js: includes helper javascript functions for the website.html, including every plot as a javascript fuction
 
 nature_crawler.py: a python script that crawls Nature journals and extracts authors and authorship information
 
@@ -37,7 +44,7 @@ peter_plots: test code for making pyplots
 
 project_proposal: project proposal documents
 
-pyplot_htmls: html files for plots for website
+pyplot_htmls_final: html files for plots for website, includes a plots.txt (a text file with names of all the html files) and  
 
 nature_crawler_test: test code for making Nature journal crawler
 

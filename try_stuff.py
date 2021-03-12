@@ -21,5 +21,5 @@ def get_html(chart):
     
     #return 1
 
-    return chart.write_html("test_pie_html.html")
+    return chart.write_html("test_bar_html.html", include_plotlyjs = False)
 
