@@ -1,30 +1,165 @@
 <!DOCTYPE html>
+
+<!-- Learning javascript and HTML with help from these websites: 
+https://www.khanacademy.org/computing/computer-programming/html-css-js 
+-->
+
 <html>
 <head>
     <title>Visualizations</title>
-    <script src="pie_chart.js"></script> 
+    <script src="pyplot_htmls_final/java_functions_final.js"> </script> 
  
     
      <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     </head> 
 
 <body>
-    <select id = "select_chart" onchange = show()> 
-    	<option value = "Select chart type" selected > "default"	</option>
-        <option value = "bar" selected > "bar chart" 			</option>
-        <option value = "pie" selected > "pie chart" 			</option> 
 
-    </select> 
+    <script> type = "text/javascript"
 
-    <button onclick = "on_press()"> click </button>
+
+        var label_rank = document.createElement('label')
+        label_rank.for = 'sel_rank'
+        label_rank.innerHTML = "   with authors of this rank:"
+
+        <!-- I found the way to make dropdowns based on a list from https://stackoverflow.com/questions/17001961/how-to-add-drop-down-list-select-programmatically -->
+     
+        var sel_rank =  document.createElement('select');
+        sel_rank.name = 'rank';
+        sel_rank.id = 'sel_rank';
+
+        var ranks = ['allrank','1','2','3','4plus']; 
+
+        var rank_str = "";
+
+        ranks.forEach( function(rank){ 
+            rank_str += '<option value = " '+ rank + '">' + rank + '</option>';
+        });
+
+        sel_rank.innerHTML = rank_str;        
+
+
+
+
+
+        var label_country = document.createElement('label')
+        label_country.for = 'sel_country'
+        label_country.innerHTML = "    Select Country:"
+     
+        var sel_country =  document.createElement('select');
+        sel_country.name = 'country';
+        sel_country.id = 'sel_country';
+
+        var countries = ['allcountry', 'united_states_of_america', 'china', 'country_not_found', 'united_kingdom', 'germany', 'japan', 'france', 'canada', 'australia', 'italy', 'spain', 'the_netherlands', 'switzerland', 'brazil', 'sweden', 'republic_of_korea', 'india', 'denmark', 'taiwan', 'korea', 'israel', 'ethiopia', 'norway', 'belgium', 'austria', 'pr_china', 'finland', 'russia', 'singapore', 'new_zealand', 'iran', 'south_africa', 'thailand', 'poland', 'south_korea', 'saudi_arabia', 'ireland', 'pakistan', 'malaysia', 'nigeria', 'czech_republic', 'portugal', 'turkey', 'kenya', 'mexico', 'hungary', 'netherlands', 'ghana', 'indonesia', 'greece', 'uganda', 'bangladesh', 'argentina', 'egypt', 'chile', 'méxico', 'colombia', 'vietnam', 'brasil', 'tanzania', 'united_arab_emirates', 'slovenia', 'nepal', 'serbia', 'morocco', 'romania', 'hong_kong', 'uae', 'tunisia', 'lebanon', 'kazakhstan', 'zimbabwe', 'zambia', 'sri_lanka', 'estonia', 'cameroon', 'peru', 'malawi', 'croatia', 'mozambique', 'jordan', 'england', 'papua_new_guinea', 'ecuador', 'qatar', 'philippines', 'ukraine', 'rwanda', 'republic_of_singapore', 'luxembourg', 'venezuela', 'puerto_rico', 'r.o.c', 'gabon', 'sénégal', 'slovakia', 'iceland', 'costa_rica', 'senegal', 'scotland']; 
+
+        var country_str = "";
+
+        countries.forEach( function(country){ 
+            country_str += '<option value = " '+ country + '">' + country + '</option>';
+        });
+
+        sel_country.innerHTML = country_str;
+
+
+
+
     
-    <div id = "eabd6016-9cd8-467a-99d9-60d13ff53726"></div>
+        var label_field = document.createElement('label')
+        label_field.for = 'sel_field'
+        label_field.innerHTML = "  in this field:"
+     
+        var sel_field =  document.createElement('select');
+        sel_field.name = 'field';
+        sel_field.id = 'sel_field';
+
+        var fields = ['allfield','biological_sciences', 'business_and_commerce', 
+              'earth_and_environmental_sciences','health_sciences',
+              'humanities', 'physical_sciences', 
+              'scientific_community_and_society','social_science']; 
+
+        var field_str = "";
+
+        fields.forEach( function(field){ 
+            field_str += '<option value = " '+ field + '">' + field + '</option>';
+        });
+
+        sel_field.innerHTML = field_str; 
+    
+
+
+        var label_size = document.createElement('label')
+        label_size.for = 'sel_size'
+        label_size.innerHTML = "with more than this number of authors:"
+     
+        var sel_size =  document.createElement('select');
+        sel_size.name = 'size';
+        sel_size.id = 'sel_size';
+
+        var sizes = ["nomin","10", "50", "100", "500"]; 
+
+        var options_str = "";
+
+        sizes.forEach( function(size){ 
+            options_str += '<option value = " '+ size + '">' + size + '</option>';
+        });
+
+        sel_size.innerHTML = options_str; 
+
+
+        var label_inst = document.createElement('label')
+        label_inst.for = 'sel_size'
+        label_inst.innerHTML = " OR select Institution:"
+     
+        var sel_inst =  document.createElement('select');
+        sel_inst.name = 'inst';
+        sel_inst.id = 'sel_inst';
+
+        var institutions = ['allinstitution', 'institution_not_found', 'chinese_academy_of_sciences', 'university_of_california', 'university_of_oxford', 'stanford_university', 'university_of_tokyo', 'university_of_cambridge', 'tsinghua_university', 'university_of_toronto', 'university_college_london', 'university_of_washington', 'massachusetts_institute_of_technology', 'school_of_medicine', 'harvard_university', 'school_of_public_health', 'columbia_university', 'peking_university', 'university_of_michigan', 'university_of_texas_md_anderson_cancer_center', 'university_of_british_columbia', 'zhejiang_university', 'university_of_copenhagen', 'university_of_florida', 'fudan_university', 'university_of_manchester', 'university_of_leeds', 'huazhong_university_of_science_and_technology', 'duke_university', 'imperial_college_london', 'university_of_sydney', 'california_institute_of_technology', 'university_of_pennsylvania', 'sun_yat-sen_university', 'harvard_medical_school', 'national_university_of_singapore', 'mcgill_university', 'university_of_minnesota', 'university_of_helsinki', 'princeton_university', 'yale_university', 'university_of_zurich', 'university_of_queensland', 'university_of_california_san_diego', 'university_of_chicago', 'university_of_bristol', 'xiamen_university', 'university_of_exeter', 'aarhus_university', 'michigan_state_university', 'university_of_science_and_technology_of_china', 'seoul_national_university', 'university_of_southampton', 'kyoto_university', 'university_of_north_carolina_at_chapel_hill', 'shanghai_jiao_tong_university', 'national_institutes_of_health', 'weizmann_institute_of_science', 'university_of_melbourne', 'university_of_pittsburgh', 'university_of_hong_kong', 'lund_university', 'ohio_state_university', 'monash_university', 'johns_hopkins_university_school_of_medicine', 'cornell_university', 'university_of_edinburgh', 'university_of_bern', 'université_de_paris', 'university_of_new_south_wales', 'graduate_school_of_medicine', 'university_of_sheffield', 'university_of_maryland', 'stanford_university_school_of_medicine', 'pennsylvania_state_university', 'mahidol_university', 'utrecht_university', 'stockholm_university', 'northwestern_university', 'university_of_california_san_francisco', 'shandong_university', 'lawrence_berkeley_national_laboratory', 'central_south_university', 'sichuan_university', 'dana-farber_cancer_institute', 'australian_national_university', 'university_of_illinois_at_urbana-champaign', 'uppsala_university', 'pacific_northwest_national_laboratory', 'shanghai_jiao_tong_university_school_of_medicine', 'university_of_alberta', 'arizona_state_university', 'university_of_calgary', 'university_of_amsterdam', 'king’s_college_london', 'texas_a&m_university', 'new_york_university', 'university_of_birmingham', 'san_diego', 'jinan_university', 'broad_institute_of_mit_and_harvard']
+; 
+
+        var inst_str = "";
+
+        institutions.forEach( function(inst){ 
+            inst_str += '<option value = " '+ inst + '">' +inst + '</option>';
+        });
+
+        sel_inst.innerHTML = inst_str; 
+
+        
+        window.onload = function(){
+            var dummy = document.getElementById("id_dummy")
+            document.body.insertBefore(label_country, dummy)
+            document.body.insertBefore(sel_country, dummy)
+            document.body.insertBefore(label_inst, dummy)
+            document.body.insertBefore(sel_inst, dummy)
+            document.body.insertBefore(label_size, dummy)
+            document.body.insertBefore(sel_size, dummy)
+            document.body.insertBefore(label_field, dummy)
+            document.body.insertBefore(sel_field, dummy)
+            document.body.insertBefore(label_rank, dummy)
+            document.body.insertBefore(sel_rank, dummy);
+        };
+
+    </script>
+
+    <!-- idea of calling function on a button press https://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_onclick -->
+    <button onclick = "on_press()"> View Results </button>
+    
+
+    <div id = "id_dummy" ></div>
+    <div id = "gen" ></div>
+
+
+    <div id = "ins" ></div>
+
+    <div id = "fld" ></div>
+
+    <div id = "rnk" ></div>
+
+    <div id = "map" ></div>
  	
     
 
 </body>
 
-</html>
-
-</body>
 </html>

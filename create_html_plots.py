@@ -40,9 +40,9 @@ institutions = get_top_k('institution', 100, c)
 
 ranks = ['1', '2', '3', '4plus']
 df.loc[df['rank'] > 3, 'rank'] = '4plus'
-df = df['rank'].astype(str)
+df['rank'] = df['rank'].astype(str)
 
-fields = ['allfields', 'biological-sciences', 'business-and-commerce', 
+fields = ['biological-sciences', 'business-and-commerce', 
               'earth-and-environmental-sciences','health-sciences',
               'humanities', 'physical-sciences', 
               'scientific-community-and-society','social-science']
@@ -88,7 +88,7 @@ def get_plots(filtered_df, config, author_min = 0, institution = '', field = '',
     if not gen_rank:
         rank_name = rank
     else:
-        rank_name = all_rank
+        rank_name = 'allrank'
 
     #institution
     institution_fig = plot_functions.gender_by_institution(filtered_df, author_min, False)
@@ -104,87 +104,101 @@ def get_plots(filtered_df, config, author_min = 0, institution = '', field = '',
     else:
         min_name = str(author_min)
 
+    direc = 'pyplot_htmls_final/'
+    country_fig.write_html(direc + 'gen_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
+    institution_fig.write_html(direc + 'ins_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
+    field_fig.write_html(direc + 'fld_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
+    rank_fig.write_html(direc + 'rnk_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
 
-    country_fig.write_html('gen_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
-    institution_fig.write_html('ins_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
-    field_fig.write_html('fld_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
-    rank_fig.write_html('rnk_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
+def generate_plots():
+    for i, config in enumerate(valid_configs):
+        print(i)
+
+        #DELETE THIS
+        if i < 11:
+            continue
 
 
-for i, config in enumerate(valid_configs):
-    if i == 0:
-        filtered_df = df
-        get_plots(filtered_df, config)
-    
-    if i == 1:
-        for size in author_sizes:
+        if i == 0:
             filtered_df = df
-            get_plots(filtered_df, config, size)
+            get_plots(filtered_df, config)
+        
+        if i == 1:
+            for size in author_sizes:
+                filtered_df = df
+                get_plots(filtered_df, config, size)
 
-    if i == 2:
-        for institution in institutions:
-            filtered_df = df[df['institution'] == institution]
-            get_plots(filtered_df, config, institution = institution)
-    
-    if i == 3:
-        for rank in ranks:
-            filtered_df = df[df['rank'] == rank]
-            get_plots(filtered_df, config, rank=rank)
-
-    if i == 4:
-        for rank in ranks:
+        if i == 2:
             for institution in institutions:
-                filtered_df = df[(df['rank'] == rank) & (df['institution'] == institution)]
-                get_plots(filtered_df, config, rank = rank, institution = institution)
-    
-    if i == 5:
-        for field in fields:
-            filtered_df = df[df['field'] == field]
-            get_plots(filtered_df, field = field)
-    
-    if i == 6:
-        for field in fields:
-            for institution in institutions:
-                filtered_df = df[(df['field'] == field) & (df['institution'] == institution)]
-                get_plots(filtered_df, field = field, institution = institution)
-
-    if i == 7:
-        for field in fields:
+                filtered_df = df[df['institution'] == institution]
+                get_plots(filtered_df, config, institution = institution)
+        
+        if i == 3:
             for rank in ranks:
-                filtered_df = df[(df['field'] == field) & (df['rank'] == rank)]
-                get_plots(filtered_df, field = field, rank = rank)
+                filtered_df = df[df['rank'] == rank]
+                get_plots(filtered_df, config, rank=rank)
 
-    if i == 8:
-        for field in fields:
+        if i == 4:
             for rank in ranks:
                 for institution in institutions:
-                    filtered_df = df[(df['field'] == field) & (df['rank'] == rank) & (df['institution'] == institution)]
-                    get_plots(filtered_df, field = field, rank = rank, institution = institution)
-    
-    if i == 9:
-        for country in countries:
-            filtered_df = df[df['country'] == country]
-            get_plots(filtered_df, country = country)
-
-    if i == 10:
-        for country in countries:
-            for rank in ranks:
-                filtered_df = df[(df['country'] == country) & (df['rank'] == rank)]
-                get_plots(filtered_df, country = country, rank = rank)
-
-    if i == 11:
-        for country in countries:
+                    filtered_df = df[(df['rank'] == rank) & (df['institution'] == institution)]
+                    get_plots(filtered_df, config, rank = rank, institution = institution)
+        
+        if i == 5:
             for field in fields:
-                filtered_df = df[(df['country'] == country) & (df['field'] == field)]
-                get_plots(filtered_df, country = country, field = field)
+                filtered_df = df[df['field'] == field]
+                get_plots(filtered_df, config, field = field)
+        
+        if i == 6:
+            for field in fields:
+                for institution in institutions:
+                    filtered_df = df[(df['field'] == field) & (df['institution'] == institution)]
+                    if filtered_df.shape[0] > 0:
+                        get_plots(filtered_df, config, field = field, institution = institution)
 
-    if i == 12:
-        for country in countries:
+        if i == 7:
             for field in fields:
                 for rank in ranks:
-                    filtered_df = df[(df['country'] == country) & (df['field'] == field) & (df['rank'] == rank)]
-                    get_plots(filtered_df, country = country, field = field, rank = rank)
+                    filtered_df = df[(df['field'] == field) & (df['rank'] == rank)]
+                    get_plots(filtered_df, config, field = field, rank = rank)
+        '''
+        #too many combinations, but compatible with our goals
+        if i == 8:
+            for field in fields:
+                for rank in ranks:
+                    for institution in institutions:
+                        filtered_df = df[(df['field'] == field) & (df['rank'] == rank) & (df['institution'] == institution)]
+                        if filtered_df.shape[0] > 0:
+                            get_plots(filtered_df, config, field = field, rank = rank, institution = institution)
+        '''
 
+        if i == 9:
+            for country in countries:
+                filtered_df = df[df['country'] == country]
+                get_plots(filtered_df, config, country = country)
+
+        if i == 10:
+            for country in countries:
+                for rank in ranks:
+                    filtered_df = df[(df['country'] == country) & (df['rank'] == rank)]
+                    if filtered_df.shape[0] > 0:
+                        get_plots(filtered_df, config, country = country, rank = rank)
+
+        if i == 11:
+            for country in countries:
+                for field in fields:
+                    filtered_df = df[(df['country'] == country) & (df['field'] == field)]
+                    if filtered_df.shape[0] > 0:
+                        get_plots(filtered_df, config, country = country, field = field)
+        '''
+        #too many combinations, but compatible with our goals
+        if i == 12:
+            for country in countries:
+                for field in fields:
+                    for rank in ranks:
+                        filtered_df = df[(df['country'] == country) & (df['field'] == field) & (df['rank'] == rank)]
+                        get_plots(filtered_df, config, country = country, field = field, rank = rank)
+        '''
     
 
 
