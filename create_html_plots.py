@@ -3,14 +3,16 @@ import sqlite3
 import pandas as pd
 import plotly.express as px
 import numpy as np
-'''
-def get_top_k_underscore(field, k, c):
 
+
+
+
+def get_top_k_underscore(field, k, c):
     tops_query = 'SELECT ' + field + ' FROM authors GROUP BY ' + field + ' ORDER BY COUNT(*) DESC LIMIT ' + str(k)
-    tops = [i[0].split() for i in c.execute(tops_query).fetchall()]
-    finals = ['_'.join(i) for i in tops]
-    return finals
-'''
+    tops = [itsy[0].split() for itsy in c.execute(tops_query).fetchall()]
+    finals = ['_'.join(i) for i in tops]
+    return finals
+
 
 def get_top_k(field, k, c):
     """
@@ -33,83 +35,157 @@ df = plot_functions.create_pd_dataframe()
 conn = sqlite3.connect('journals.db')
 c = conn.cursor()
 
-top_countries = get_top_k('country', 100, c)
-top_countries.insert(0, 'all_countries')
-top_institutions = get_top_k('institution', 100, c)
-top_institutions.insert(0, 'all_institutions')
+countries = get_top_k('country', 100, c)
+institutions = get_top_k('institution', 100, c)
 
-lst_ranks = ['1', '2', '3', '4plus']
+ranks = ['1', '2', '3', '4plus']
 df.loc[df['rank'] > 3, 'rank'] = '4plus'
 df = df['rank'].astype(str)
 
-lst_fields = ['allfields', 'biological-sciences', 'business-and-commerce', 
+fields = ['allfields', 'biological-sciences', 'business-and-commerce', 
               'earth-and-environmental-sciences','health-sciences',
               'humanities', 'physical-sciences', 
               'scientific-community-and-society','social-science']
-author_min = [0, 10, 50, 100, 500]
+author_sizes = [0, 10, 50, 100, 500]
 
 
 
-for country in top_countries:
-    for field in lst_fields:
-        for rank in lst_ranks:
-            for institution in top_institutions:
-                if institution == 'all_institutions' and country == 'all_countries':
-                    filtered_df = df[(df['field'] == field) & (df['rank'] == rank)]
-                    country_fig = plot_functions.gender_by_country(filtered_df, 0, False)
-                    country = country.split()
-                    institution = institution.split()
-                    field = field.split(sep = '-')
+valid_configs = [
+[True, True, True, True, True],
+[True, True, True, True, False],
+[True, True, True, False, True],
+[True, True, False, True, True],
+[True, True, False, False, True],
+[True, False, True, True, True],
+[True, False, True, False, True],
+[True, False, False, True, True],
+[True, False, False, False, True],
+[False, True, True, True, True],
+[False, True, False, True, True],
+[False, False, True, True, True],
+[False, False, False, True, True]]
 
-                    country_fig.write_html('gen_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
-                    country_fig.write_html('ins_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
-                    
-                    field_fig = plot_functions.gender_by_field(filtered_df, False)
-                    field_fig.write_html('fld_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
+def get_plots(filtered_df, config, author_min = 0, institution = '', field = '', rank = '', country = ''):
+    #country
+    gen_country, gen_field, gen_rank, gen_inst, gen_as = config
+    country_fig = plot_functions.gender_by_country(filtered_df, author_min, False)
+    if not gen_country:
+        country_name = country.split()
+        country_name = ('_').join(country_name)
+    else:
+        country_name = 'allcountry'
 
-                    rank_fig = plot_functions.gender_by_rank(filtered_df, False)
-                    rank_fig.write_html('rnk_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
-                
-            
-                if institution == 'all_institutions':
-                    filtered_df = df[(df['field'] == field) & (df['rank'] == rank) & (df['country'] == country)]
-                    country_fig = plot_functions.gender_by_country(filtered_df, 0, False)
-                    country = country.split()
-                    institution = institution.split()
-                    field = field.split(sep = '-')
+    #field
+    field_fig = plot_functions.gender_by_field(filtered_df, False)
+    if not gen_field:
+        field_name = field.split(sep = '-')
+        field_name = ('_').join(field_name)
+    else:
+        field_name = 'allfield'
 
-                    country_fig.write_html('gen_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
-                    country_fig.write_html('ins_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
-                    
-                    field_fig = plot_functions.gender_by_field(filtered_df, False)
-                    field_fig.write_html('fld_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
+    #rank
+    rank_fig = plot_functions.gender_by_rank(filtered_df, False)
+    if not gen_rank:
+        rank_name = rank
+    else:
+        rank_name = all_rank
 
-                    rank_fig = plot_functions.gender_by_rank(filtered_df, False)
-                    rank_fig.write_html('rnk_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
-                else:
+    #institution
+    institution_fig = plot_functions.gender_by_institution(filtered_df, author_min, False)
+    if not gen_inst:
+        inst_name = institution.split()
+        inst_name = ('_').join(inst_name)
+    else:
+        inst_name = 'allinstitution'
+
+    #author size
+    if author_min == 0:
+        min_name = 'nomin'
+    else:
+        min_name = str(author_min)
+
+
+    country_fig.write_html('gen_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
+    institution_fig.write_html('ins_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
+    field_fig.write_html('fld_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
+    rank_fig.write_html('rnk_' + country_name + '_' + inst_name + "_" + min_name + "_" + field_name + "_" + rank_name + ".html", include_plotlyjs = False)
+
+
+for i, config in enumerate(valid_configs):
+    if i == 0:
+        filtered_df = df
+        get_plots(filtered_df, config)
+    
+    if i == 1:
+        for size in author_sizes:
+            filtered_df = df
+            get_plots(filtered_df, config, size)
+
+    if i == 2:
+        for institution in institutions:
+            filtered_df = df[df['institution'] == institution]
+            get_plots(filtered_df, config, institution = institution)
+    
+    if i == 3:
+        for rank in ranks:
+            filtered_df = df[df['rank'] == rank]
+            get_plots(filtered_df, config, rank=rank)
+
+    if i == 4:
+        for rank in ranks:
+            for institution in institutions:
+                filtered_df = df[(df['rank'] == rank) & (df['institution'] == institution)]
+                get_plots(filtered_df, config, rank = rank, institution = institution)
+    
+    if i == 5:
+        for field in fields:
+            filtered_df = df[df['field'] == field]
+            get_plots(filtered_df, field = field)
+    
+    if i == 6:
+        for field in fields:
+            for institution in institutions:
+                filtered_df = df[(df['field'] == field) & (df['institution'] == institution)]
+                get_plots(filtered_df, field = field, institution = institution)
+
+    if i == 7:
+        for field in fields:
+            for rank in ranks:
+                filtered_df = df[(df['field'] == field) & (df['rank'] == rank)]
+                get_plots(filtered_df, field = field, rank = rank)
+
+    if i == 8:
+        for field in fields:
+            for rank in ranks:
+                for institution in institutions:
                     filtered_df = df[(df['field'] == field) & (df['rank'] == rank) & (df['institution'] == institution)]
-                    country_fig = plot_functions.gender_by_country(filtered_df, 0, False)
-                    country = country.split()
-                    institution = institution.split()
-                    field = field.split(sep = '-')
+                    get_plots(filtered_df, field = field, rank = rank, institution = institution)
+    
+    if i == 9:
+        for country in countries:
+            filtered_df = df[df['country'] == country]
+            get_plots(filtered_df, country = country)
 
-                    country_fig.write_html('gen_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
-                    country_fig.write_html('ins_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
-                    
-                    field_fig = plot_functions.gender_by_field(filtered_df, False)
-                    field_fig.write_html('fld_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
+    if i == 10:
+        for country in countries:
+            for rank in ranks:
+                filtered_df = df[(df['country'] == country) & (df['rank'] == rank)]
+                get_plots(filtered_df, country = country, rank = rank)
 
-                    rank_fig = plot_functions.gender_by_rank(filtered_df, False)
-                    rank_fig.write_html('rnk_' + 'allcountry' + '_' + ('_').join(institution) + '_nomin_' + ('_').join(field) + "_" + rank +'.html', include_plotlyjs = False)
+    if i == 11:
+        for country in countries:
+            for field in fields:
+                filtered_df = df[(df['country'] == country) & (df['field'] == field)]
+                get_plots(filtered_df, country = country, field = field)
 
-                for min in author_min:
-                    if country == 'allcountry':
-                        if field == 'allfields':
-                            filtered_df = df[(df['field'] == field) & (df['rank'] == rank)]
-                            country_fig = plot_functions.gender_by_country(filtered_df, min, False)
-                            country_fig.write_html('gen_' + country + '_' + 'countryByGender_' + str(author_min) + '.html', include_plotlyjs = False) #html code
-                    if institution == 'allinstitution':
-                        filtered_df = df
+    if i == 12:
+        for country in countries:
+            for field in fields:
+                for rank in ranks:
+                    filtered_df = df[(df['country'] == country) & (df['field'] == field) & (df['rank'] == rank)]
+                    get_plots(filtered_df, country = country, field = field, rank = rank)
+
+    
 
 
 

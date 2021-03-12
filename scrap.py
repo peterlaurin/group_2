@@ -1,4 +1,5 @@
 import sqlite3
+i
 conn = sqlite3.connect('journals.db')
 c = conn.cursor()
 
@@ -15,3 +16,38 @@ def get_top_k(field, k):
 
 top_countries = get_top_k('country', 100)
 top_institutions = get_top_k('institution', 100)
+
+
+
+
+
+valid_configs = [
+[True, True, True, True, True],
+[True, True, True, True, False],
+[True, True, True, False, True],
+[True, True, False, True, True],
+[True, True, False, False, True],
+[True, False, True, True, True],
+[True, False, True, False, True],
+[True, False, False, True, True],
+[True, False, False, False, True],
+[False, True, True, True, True],
+[False, True, False, True, True],
+[False, False, True, True, True],
+[False, False, False, True, True]]
+
+config_boos = [np.array(i) for i in valid_configs]
+
+select = np.array(['countries', 'field', 'rank', 'institution', 'author_size'])
+
+for_selector = []
+
+for boo in config_boos:
+    for_selector.append(select[~boo])
+
+
+
+for config in for_selector: 
+
+
+
