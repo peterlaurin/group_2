@@ -13,6 +13,7 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
+
 def create_pd_dataframe():
     """
     Creates a Pandas DataFrame from SQL database.
@@ -20,9 +21,8 @@ def create_pd_dataframe():
     Returns:
         df (Pandas DataFrame)
     """
-
-    conn = sqlite3.connect('journals.db')
-    sql_query = pd.read_sql_query('''select field, institution, gender, rank, country\
+    conn = sqlite3.connect('../journals.db')
+    sql_query = pd.read_sql_query('''select field, institution, gender, rank, country \
          from authors join author_key_rank on authors.author_identifier = author_key_rank.author_identifier join papers on papers.paper_identifier = author_key_rank.paper_identifier''', conn)
     df = pd.DataFrame(sql_query, columns = ['field', 'institution', 'gender', 'rank', 'country'])
 
