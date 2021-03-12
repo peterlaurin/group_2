@@ -29,8 +29,8 @@ make_plots/ : This directory contains scripts used to generate pyplot graphs and
   - plot_functions.py: functions to create plots for gender breakdown by country, gender breakdown by field, gender breakdown by institution, gender breakdown by rank.
 
 make_website/ : This directory includes the files used to crease the website. First, we found the names of all the files in 
-pyplot_htmls_final via the terminal and saved that in plots.txt. Make_js_plots_final.py took plots.txt to iteratute through the html
-files in plots_html_final, extract the havascript portion of the html, and write a javascript file that includes each plot javascript as a function. We called the resulting javascript file java_functions_final, added an additional function, and then referenced this file through website.html. 
+pyplot_htmls_final via the terminal and saved that in plots.txt. Make_js_plots_final.py took plots.txt to iterate through the html
+files in plots_html_final, extract the javascript portion of the html, and write a javascript file that includes each plot javascript as a function. We called the resulting javascript file java_functions_final, added an additional function, and then referenced this file through website.html. 
   -plot.txt: a text file with the names of all the files in pyplot_htmls_final (at the time we made it)
   -make_js_plots_final.py: writes javascript file as described above
   -java_functions_final.js; javascript functions (on_press() and one function per plot) that are used by website.html 
@@ -38,13 +38,9 @@ files in plots_html_final, extract the havascript portion of the html, and write
 
 Files: 
 
-website.html: the html code for the wensite, with embedded javascript 
+website.html: the html code for the website, with embedded javascript 
 
-make_js_plots_final.py: takes html for plots and extracts the javascript from them, writes a javascript file with each plot as a function, changes the div ids of the plots to match div ids from website.html 
 
-java_functions_final.js: includes helper javascript functions for the website.html, including every plot as a javascript fuction
-
-plots.txt: the names of the files in pyplot_htmls_final 
 
 nature_crawler.py: a python script that crawls Nature journals and extracts authors and authorship information
 
@@ -66,21 +62,30 @@ plot_functions.py: a script that generates pyplots breaking down gender percenta
 
 
 
-Directories:
+Directories/files:
 
 make_database: scripts to recerate journals.dv
 
 make_website: scripts that made javascript files used by website.html  
+- make_js_plots_final.py: takes html for plots and extracts the javascript from them, writes a javascript file with each plot as a function, changes the div ids of the plots to match div ids from website.html 
+- java_functions_final.js: includes helper javascript functions for the website.html, including every plot as a javascript function
+- plots.txt: the names of the files in pyplot_htmls_final 
 
-lily_plots: test code for making pyplots
+make_plots: scripts to create pyplots and their html files based on journals.db
+- create_html_plots.py: creates html files for all website graphs
+- plot_functions.py: functions to create pyplot graphs 
 
-peter_plots: test code for making pyplots
+regression: exploratory regression analysis
+- author_regression.ipynb: jupyter notebook explaining exploratory linear regression
+
+pyplots_html_final: html files for all graphs to be displayed on website based on user filtering
+
+test_code: code used to test and build various scripts
 
 project_proposal: project proposal documents
 
-pyplot_htmls_final: html files for plots for website, includes a plots.txt (a text file with names of all the html files) and  
 
-nature_crawler_test: test code for making Nature journal crawler
+
 
 
 
