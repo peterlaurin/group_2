@@ -1,7 +1,7 @@
-# CS122: group_2 project
-#
-#  Author: Peter Laurin
-#
+#This script will crawl Nature subjects and papers and add relevant info to journals.db. 
+#However, if wishing to run it for testing 
+#purposes, insert 'dummy_journals.db' as a parameter
+
 
 import re
 import util
@@ -92,7 +92,7 @@ def get_institution_name(author, authors):
         pot_institution = pot_institution.nextSibling
     return '', ''
 
-def nature_crawler(number_of_articles):
+def nature_crawler(number_of_articles, database_name):
     '''
     Crawls nature.com and their suite of journals to extraact authorship 
     information for the database 'journals.db'.
@@ -105,7 +105,7 @@ def nature_crawler(number_of_articles):
         None, but modifies journals.db
     '''
 
-    conn = sqlite3.connect('journals.db')
+    conn = sqlite3.connect(database_name)
     c = conn.cursor()
     
     home_domain = "https://www.nature.com"

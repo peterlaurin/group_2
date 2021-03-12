@@ -1,3 +1,7 @@
+#This file's functions intended to be run on journals.db
+#However, if using for testing purposes please change
+#path to '../make_database/dummy_journals.db'
+
 import sqlite3
 
 CONN = sqlite3.connect('journals.db')
