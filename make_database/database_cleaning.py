@@ -2,23 +2,18 @@ import sqlite3
 
 CONN = sqlite3.connect('journals.db')
 
-def country_not_found():
-    c = CONN.cursor()
-    q_str = "SELECT author_identifier, country FROM authors WHERE country = ''"
-    query = c.execute(q_str)
-    for author_id, country in query.fetchall():
-        new_q = 'UPDATE authors SET country = ? WHERE author_identifier = ?'
-        c.execute(new_q, ('country not found', author_id))
-        CONN.commit()
 
 def condense_country_entries():
     """
-    Rewrites iterations of United States in country column to "united states of
-    america". Assumes "us" and "united states" refers
-    to United States of America. 
+    Rewrites iterations of different country inputs in journals and spellings
+    too form one country name. Also unassigned countries made to
+    'country not found' 
 
     Input:
-        database_name (str): database name and filepath
+        None, but uses journals.db CONNection
+
+    Output:
+        None, but modifies journals.db
     """
     c = CONN.cursor()
     iter_us = ["united sates of america", "united state of america", 
@@ -46,6 +41,12 @@ def remove_the():
     '''
     Removes 'the ' from institution in database in order to not double 
     count institutions
+
+    Input:
+        None, but uses journals.db CONNection
+
+    Output:
+        None, but modifies journals.db
     '''
     c = CONN.cursor()
     the_list = c.execute("SELECT author_identifier, institution from authors \

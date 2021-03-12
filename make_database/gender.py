@@ -6,6 +6,16 @@ import unidecode
 
 
 def get_gender(name):
+    '''
+    Assigns gender from first_name using names.org (multiyear census data)
+
+    Input:
+        name, str, the first_name (stripped) of the author
+
+    Output:
+        gender, str, a gender assignment or additional category
+
+    '''
 
     unaccented_name = unidecode.unidecode(name)
 
