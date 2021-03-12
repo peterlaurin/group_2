@@ -94,16 +94,15 @@ def get_institution_name(author, authors):
 
 def nature_crawler(number_of_articles):
     '''
-    Crawl the college catalog and generate a CSV file with an index.
+    Crawls nature.com and their suite of journals to extraact authorship 
+    information for the database 'journals.db'.
 
     Inputs:
-        num_pages_to_crawl: the number of pages to process during the crawl
-        course_map_filename: the name of a JSON file that contains the mapping of
-          course codes to course identifiers
-        index_filename: the name for the CSV of the index.
+        number_of_articles, int, the number of articles to extract from
+         the journals
 
     Outputs:
-        CSV file of the index
+        None, but modifies journals.db
     '''
 
     conn = sqlite3.connect('journals.db')
