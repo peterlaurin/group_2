@@ -7,7 +7,7 @@ https://www.khanacademy.org/computing/computer-programming/html-css-js
 <html>
 <head>
     <title>Visualizations</title>
-    <script src="pyplot_htmls_final/java_functions_final.js"> </script> 
+    <script src="make_website/java_functions_final.js"> </script> 
  
     
      <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -17,13 +17,15 @@ https://www.khanacademy.org/computing/computer-programming/html-css-js
 
     <script> type = "text/javascript"
 
-
+        // Here I make labels and dropdown menus for country, institutions, number of authors (size), feild, and rank based on lists of possible chosices. 
+        //I found the way to make dropdowns based on a list from https://stackoverflow.com/questions/17001961/how-to-add-drop-down-list-select-programmatically -->
+     
+        //make label and select (dropdown) for rank 
         var label_rank = document.createElement('label')
         label_rank.for = 'sel_rank'
         label_rank.innerHTML = "   with authors of this rank:"
 
-        <!-- I found the way to make dropdowns based on a list from https://stackoverflow.com/questions/17001961/how-to-add-drop-down-list-select-programmatically -->
-     
+        
         var sel_rank =  document.createElement('select');
         sel_rank.name = 'rank';
         sel_rank.id = 'sel_rank';
@@ -40,7 +42,7 @@ https://www.khanacademy.org/computing/computer-programming/html-css-js
 
 
 
-
+        //do same for country
 
         var label_country = document.createElement('label')
         label_country.for = 'sel_country'
@@ -62,7 +64,7 @@ https://www.khanacademy.org/computing/computer-programming/html-css-js
 
 
 
-
+        //same for field
     
         var label_field = document.createElement('label')
         label_field.for = 'sel_field'
@@ -85,7 +87,7 @@ https://www.khanacademy.org/computing/computer-programming/html-css-js
 
         sel_field.innerHTML = field_str; 
     
-
+        //same for number of authors 
 
         var label_size = document.createElement('label')
         label_size.for = 'sel_size'
@@ -106,8 +108,9 @@ https://www.khanacademy.org/computing/computer-programming/html-css-js
         sel_size.innerHTML = options_str; 
 
 
+        //same for institution 
         var label_inst = document.createElement('label')
-        label_inst.for = 'sel_size'
+        label_inst.for = 'sel_inst'
         label_inst.innerHTML = " OR select Institution:"
      
         var sel_inst =  document.createElement('select');
@@ -126,6 +129,7 @@ https://www.khanacademy.org/computing/computer-programming/html-css-js
         sel_inst.innerHTML = inst_str; 
 
         
+        // have them all dispaly before the id_dummy tag (on the top)
         window.onload = function(){
             var dummy = document.getElementById("id_dummy")
             document.body.insertBefore(label_country, dummy)
@@ -142,9 +146,10 @@ https://www.khanacademy.org/computing/computer-programming/html-css-js
 
     </script>
 
-    <!-- idea of calling function on a button press https://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_onclick -->
+    <!-- button calls on_press() from java_functions_final.js. The idea of calling function on a button press https://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_onclick -->
     <button onclick = "on_press()"> View Results </button>
     
+    <!-- This has placeholder divs so that when op_press() calls eval(), the code knows where to go by that id-->
 
     <div id = "id_dummy" ></div>
     <div id = "gen" ></div>
@@ -155,8 +160,6 @@ https://www.khanacademy.org/computing/computer-programming/html-css-js
     <div id = "fld" ></div>
 
     <div id = "rnk" ></div>
-
-    <div id = "map" ></div>
  	
     
 
