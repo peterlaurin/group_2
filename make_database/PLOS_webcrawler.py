@@ -3,6 +3,9 @@
 #
 # Lily Mansfield
 #
+#Calling PLOS_webcrawler.go(num_articles_to_crawl, start_page, database_name) starts the
+#crawler. Crawler will print authors table entries, unique errors and (author_identifier, paper_identifier)
+#to terminal so user can track progress. 
 
 import re
 import util
@@ -15,18 +18,18 @@ import math
 import sqlite3
 import gender
 
-AFFILIATIONS = ['university', 'université', 'universität', 'ucla', 'universidad', 'univ', 'università', 'school', 'laboratory']
+AFFILIATIONS = ['university', 'université', 'universität', 'ucla',\
+     'universidad', 'univ', 'università', 'school', 'laboratory']
 
 def go(num_articles_to_crawl, start_page, database_name):
     '''
-    Crawl the PLOS One and generate a database. Automatically samples even
-    number of articles from each subject area based on num_pages_to_crawl.
+    Crawl the PLOS One and generate an SQL database. Automatically samples even
+    number of articles from each subject area based on num_articles_to_crawl.
 
     Inputs:
-        num_pages_to_crawl: the number of pages to process during the crawl
-
-    Outputs:
-        dictionary mapping author identifiers to list of variables
+        num_articles_to_crawl (int): theapproximate number of articles to process during the crawl
+        start_page (int): page of PLOS One subject browsing to start crawling at
+        database_name (string): name of database to add to 
     '''
     urls_visited = set()
     starting_url = ("https://journals.plos.org/plosone/browse")
@@ -59,7 +62,8 @@ def go(num_articles_to_crawl, start_page, database_name):
 
 def get_field(subject_url):
     """
-    Finds the associated field from Nature based on PLOS One field.
+    Finds the associated field from Nature based on PLOS One field
+    (we prioritized Nature subjects categorization).
 
     Input: 
         subject_url (string)
@@ -93,6 +97,7 @@ def process_article(article_url, field, database_name):
     Inputs:
         article_url (string)
         field (string)
+        database_name (string)
     """
     conn = sqlite3.connect(database_name)
     c = conn.cursor()
@@ -126,12 +131,14 @@ def add_paper_table_entry(article_soup, field, num_authors, conn, c):
     journal = "PLOS One"
     entry = (title, date, journal, field, num_authors)
     try:
-        c.execute('INSERT INTO papers (title, year, journal, field, num_authors) VALUES (?, ?, ?, ?, ?)', entry)
+        c.execute('INSERT INTO papers (title, year, journal, field, num_authors) VALUES (?, ?, ?, ?, ?)',\
+             entry)
         conn.commit()
     except:
         print("error, paper insert not unique")
 
-    paper_identifier = c.execute("select paper_identifier from papers where title = ?", (title,)).fetchall()[0][0]
+    paper_identifier = c.execute("select paper_identifier from papers where title = ?",\
+         (title,)).fetchall()[0][0]
     conn.commit()
     return paper_identifier
 
