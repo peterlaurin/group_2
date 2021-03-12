@@ -1,4 +1,7 @@
-#T
+#This script will write all of our html plots that are curently included in
+#the directory pyplot_htmls_final. However, if wishing to run it for testing 
+#purposes, switch out 'pyplot_htmls_final/' below with 'dummy_pyplot_htmls_final'
+
 
 
 import plot_functions
@@ -44,10 +47,16 @@ def get_top_k(field, k, c):
 
 
 #create Pandas DataFrame for w
-df = plot_functions.create_pd_dataframe()
 
 conn = sqlite3.connect('../journals.db')
 c = conn.cursor()
+
+sql_query = pd.read_sql_query('''select field, institution, gender, rank, \
+     country from authors join author_key_rank on authors.author_identifier = \
+     author_key_rank.author_identifier join papers on papers.paper_identifier \
+     = author_key_rank.paper_identifier''', conn)
+df = pd.DataFrame(sql_query, columns = ['field', 'institution', 'gender', 
+                                        'rank', 'country'])
 
 countries = get_top_k('country', 100, c)
 institutions = get_top_k('institution', 100, c)
@@ -154,15 +163,10 @@ def get_plots(filtered_df, config, author_min = 0, institution = '',
 
 def generate_plots():
     '''
-
+    overall function that takes configurations and passes 
+    in filtered dataframe to get_plots
     '''
     for i, config in enumerate(valid_configs):
-        print(i)
-
-        #DELETE THIS
-        if i < 11:
-            continue
-
 
         if i == 0:
             filtered_df = df
