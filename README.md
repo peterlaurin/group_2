@@ -36,35 +36,20 @@ files in plots_html_final, extract the javascript portion of the html, and write
   -java_functions_final.js; javascript functions (on_press() and one function per plot) that are used by website.html 
 
 
-Files: 
+Main directory: 
 
 website.html: the html code for the website, with embedded javascript 
 
-
-
-nature_crawler.py: a python script that crawls Nature journals and extracts authors and authorship information
-
-PLOS_webcrawler.py: a python script that crawls PLOS_ONE and extracts authors and authorship information
-
-gender.py: a utility function that assigns gender to authors
-
-create_database.py: a script that sets up our database of author information, paper information, and author rankings in each paper
-
 journals.db: the database of author information, paper information, and author rankings in each paper
-
-database_cleaning.py: a set of utility functions to clean data and make database more accurate
-
-author_regression.ipynb: a python notebook regressing gender on some of our data and getting a priority of data to visualize on the website
-
-create_html_plots.py: a script that iterates through all possible combinations of filters (country, field, rank, institution, minimum number of authors) from our website dropdown menus and generates hmtl code for each plot
-
-plot_functions.py: a script that generates pyplots breaking down gender percentages based on country, field, rank and institution
-
-
 
 Directories/files:
 
 make_database: scripts to recerate journals.dv
+- nature_crawler.py: a python script that crawls Nature journals and extracts authors and authorship information
+- PLOS_webcrawler.py: a python script that crawls PLOS_ONE and extracts authors and authorship information
+- gender.py: a utility function that assigns gender to authors
+- create_database.py: a script that sets up our database of author information, paper information, and author rankings in each paper
+- database_cleaning.py: a set of utility functions to clean data and make database more accurate
 
 make_website: scripts that made javascript files used by website.html  
 - make_js_plots_final.py: takes html for plots and extracts the javascript from them, writes a javascript file with each plot as a function, changes the div ids of the plots to match div ids from website.html 
@@ -72,11 +57,11 @@ make_website: scripts that made javascript files used by website.html
 - plots.txt: the names of the files in pyplot_htmls_final 
 
 make_plots: scripts to create pyplots and their html files based on journals.db
-- create_html_plots.py: creates html files for all website graphs
-- plot_functions.py: functions to create pyplot graphs 
+- create_html_plots.py: a script that iterates through all possible combinations of filters (country, field, rank, institution, minimum number of authors) from our website dropdown menus and generates hmtl code for each plot
+- plot_functions.py: a script that generates pyplots breaking down gender percentages based on country, field, rank and institution
 
 regression: exploratory regression analysis
-- author_regression.ipynb: jupyter notebook explaining exploratory linear regression
+- author_regression.ipynb: a jupyter notebook regressing gender on some of our data and getting a priority of data to visualize on the website
 
 pyplots_html_final: html files for all graphs to be displayed on website based on user filtering
 
