@@ -1,9 +1,17 @@
+# 
+# 
+# Functions for plotting bar graph breakdown by gender for institutions, countries, fields and paper rank
+# with plotly.
+#
+#Resources used:
+#https://stackoverflow.com/questions/55910004/get-continent-name-from-country-using-pycountry
+#https://stackoverflow.com/questions/17995024/how-to-assign-a-name-to-the-a-size-column
+#https://stackoverflow.com/questions/23377108/pandas-percentage-of-total-with-groupby
+
 import sqlite3
 import pandas as pd
 import plotly.express as px
 import numpy as np
-
-
 
 def create_pd_dataframe():
     """
@@ -29,14 +37,9 @@ def gender_by_country(df, author_min, show_graph = True):
     Inputs:
         database_name (str): database filepath and name
         author_min (int)
-        create_html(bool)
         show_graph(bool)
     """
-    #conn = sqlite3.connect(database_name)
-    #sql_query = pd.read_sql_query('''select * from authors''', conn)
-    #df = pd.DataFrame(sql_query, columns = ['author_identifier', 'first_name', 'last_name', 'institution', 'gender', 'country'])
-
-    df_gc = df.groupby(['country']).size().to_frame('count').reset_index() #worked
+    df_gc = df.groupby(['country']).size().to_frame('count').reset_index() 
     countries_min = df_gc[df_gc['count'] > author_min].reset_index(drop=True)
     df = df.reset_index(drop=True) 
 
@@ -53,10 +56,7 @@ def gender_by_country(df, author_min, show_graph = True):
         fig.show()
 
     return fig
-    
-    #if create_html:
-        #fig.write_html('gen_countryByGender_' + str(author_min) + '.html', include_plotlyjs = False) #html code
-    #fig.show()
+
 
 def gender_by_institution(df, author_min, show_graph = True):
     """
@@ -66,12 +66,11 @@ def gender_by_institution(df, author_min, show_graph = True):
     Inputs:
         df (Pandas DataFrame)
         author_min (int)
-        create_html(bool)
         show_graph(bool)
     """
-    df_count = df.groupby(['institution']).size().to_frame('count').reset_index() #worked
+    df_count = df.groupby(['institution']).size().to_frame('count').reset_index() 
     institution_min = df_count[df_count['count'] > author_min].reset_index(drop=True)
-    #df = df.reset_index(drop=True) 
+    df = df.reset_index(drop=True) 
 
     df_minfiltered = df.merge(institution_min['institution'], on = 'institution').reset_index(drop = True)
     grpd = df_minfiltered.groupby(['gender','institution']).size().to_frame('count').reset_index()
@@ -88,83 +87,27 @@ def gender_by_institution(df, author_min, show_graph = True):
     return fig
 
 
-
-
 def gender_by_rank(df, show_graph = True):
     """
     Plots a bar graph showing percent of authors by gender vs. rank.
 
     Inputs:
         database_name (str)
-        create_html(bool)
         show_graph(bool)
     """
-
-    #conn = sqlite3.connect(database_name)
-    #sql_query = pd.read_sql_query('''select gender, rank from authors join author_key_rank on authors.author_identifier = author_key_rank.author_identifier''', conn)
-    #df = pd.DataFrame(sql_query, columns = ['gender', 'rank'])
-
-    grp_df = df.groupby(['gender','rank']).size().to_frame('count').reset_index() #worked
+    grp_df = df.groupby(['gender','rank']).size().to_frame('count').reset_index() 
 
     rank_gender = grp_df.groupby(['rank','gender']).agg({'count':'sum'})
-    rank_pcts = rank_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))#need to change count column to percent column
+    rank_pcts = rank_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))
+    rank_pcts.rename(columns = {"count": "percent"}, inplace = True)
     rank_pcts.reset_index(inplace = True)
 
     fig = px.bar(rank_pcts, x="rank", y="count", color="gender", title="Gender breakdown by rank")
-    #if create_html: 
-        #fig.write_html('bar_rankByGender.html', include_plotlyjs = False) #html code
     if show_graph:
         fig.show()
     
     return fig
 
-
-
-"""
-DELETE FUNCTION
-"""
-def gender_by_rank_condensed(database_name, create_html = False, show_graph = True):
-    """
-    Plots a bar graph showing percent of authors by gender vs. rank (1, 2, 3, and 4+).
-
-    Inputs:
-        database_name (str)
-        create_html(bool)
-        show_graph(bool)
-    """
-    #conn = sqlite3.connect(database_name)
-    #sql_query = pd.read_sql_query('''select gender, rank from authors join author_key_rank on authors.author_identifier = author_key_rank.author_identifier''', conn)
-    #df = pd.DataFrame(sql_query, columns = ['gender', 'rank'])
-
-    grp_df = df.groupby(['gender','rank']).size().to_frame('count').reset_index() #worked
-
-    rank_gender = grp_df.groupby(['rank','gender']).agg({'count':'sum'})
-    #create a 4+ table
-    rank_gender.reset_index(inplace = True) #need to define rank_gender from above function
-    df_4plus = rank_gender[rank_gender['rank'] > 4]
-    df_4plus_agg = df_4plus.groupby('gender').agg({'count':'sum'})
-    df_4plus_agg.reset_index(inplace = True)
-    df_4plus_agg['rank'] = '4+'
-
-    #create 1-3 table
-    df_rest = rank_gender[rank_gender['rank'] < 4].reset_index(drop = True)
-
-    #combine
-    df_combined = pd.concat([df_rest, df_4plus_agg])
-
-    #calculate percents
-    grp_df_combined = df_combined.groupby(['rank', 'gender']).agg({'count':'sum'})
-
-    rank_pcts = grp_df_combined.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))#need to change count column to percent column
-    rank_pcts.reset_index(inplace = True)
-
-    rank_pcts['rank'] = rank_pcts['rank'].apply(str)
-
-    fig = px.bar(rank_pcts, x="rank", y="count", color="gender", title="Gender breakdown by rank", labels = {'count': "Percent %"})
-    if create_html:
-        fig.write_html('bar_rankByGender_condensed.html', include_plotlyjs = False) #html code
-    if show_graph:
-        fig.show()
 
 def gender_by_field(df, show_graph = True):
     """
@@ -175,9 +118,6 @@ def gender_by_field(df, show_graph = True):
         database_name (str)
         show_graph (bool)
     """
-    #conn = sqlite3.connect(database_name)
-    #sql_query = pd.read_sql_query('''select gender, field from authors join author_key_rank on authors.author_identifier = author_key_rank.author_identifier join papers on author_key_rank.paper_identifier = papers.paper_identifier''', conn)
-    #df = pd.DataFrame(sql_query, columns = ['gender', 'field'])# count didn't save
 
     grp_df = df.groupby(['gender','field']).size().to_frame('count').reset_index()
 
@@ -187,16 +127,16 @@ def gender_by_field(df, show_graph = True):
     field_pcts.rename(columns = {"count": "percent"}, inplace = True)
 
     fig = px.bar(field_pcts, x="field", y="percent", color="gender", title="Gender breakdown by field", labels = {'percent': "Percent %", "field": "Field"})
-    #if create_html:
-        #fig.write_html('bar_fieldByGender.html', include_plotlyjs = False) #html code
-    
+
     if show_graph:
         fig.show()
 
     return fig
 
+
 def gender_by_field_individual(database_name, field_pcts, create_html = False, show_graph = True):
     """
+    Deprecated function - more general function of gender_by_field used. 
     Plots a bar graph showing percent of authors by gender vs. field for each field.
 
     Inputs:
