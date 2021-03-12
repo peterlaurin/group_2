@@ -11,6 +11,15 @@ import numpy as np
 
 
 def get_top_k_underscore(field, k, c):
+    '''
+    Gets top k entries (by count) from database by given field
+    Also puts in underscore format for website
+
+    Input:
+    field, str of field in journals.db
+    k, int, num of entries too pull, 
+    c, cursor object
+    '''
     tops_query = 'SELECT ' + field + ' FROM authors GROUP BY ' + field + \
                  ' ORDER BY COUNT(*) DESC LIMIT ' + str(k)
     tops = [itsy[0].split() for itsy in c.execute(tops_query).fetchall()]
@@ -75,8 +84,8 @@ valid_configs = [
 def get_plots(filtered_df, config, author_min = 0, institution = '', 
               field = '', rank = '', country = ''):
     '''
-    writes pyplot html plots in pyplot_htmls_final/ (see README.md) from 
-    filtered dataframe and field names
+    writes pyplot html plots in pyplot_htmls_final/ (in main directory now, 
+    see README.md) from filtered dataframe and field names
 
     Input:
     filtered_df, pd.DataFrame of journals.db filtered on category
@@ -144,6 +153,9 @@ def get_plots(filtered_df, config, author_min = 0, institution = '',
                         ".html", include_plotlyjs = False)
 
 def generate_plots():
+    '''
+
+    '''
     for i, config in enumerate(valid_configs):
         print(i)
 
