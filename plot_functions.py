@@ -21,7 +21,7 @@ def create_pd_dataframe():
         df (Pandas DataFrame)
     """
 
-    conn = sqlite3.connect('/home/lilymansfield/group_2/journals.db')
+    conn = sqlite3.connect('journals.db')
     sql_query = pd.read_sql_query('''select field, institution, gender, rank, country\
          from authors join author_key_rank on authors.author_identifier = author_key_rank.author_identifier join papers on papers.paper_identifier = author_key_rank.paper_identifier''', conn)
     df = pd.DataFrame(sql_query, columns = ['field', 'institution', 'gender', 'rank', 'country'])
