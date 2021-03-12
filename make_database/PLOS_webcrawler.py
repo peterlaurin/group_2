@@ -6,6 +6,8 @@
 #Calling PLOS_webcrawler.go(num_articles_to_crawl, start_page, database_name) starts the
 #crawler. Crawler will print authors table entries, unique errors and (author_identifier, paper_identifier)
 #to terminal so user can track progress. 
+#
+#Test call: PLOS_webcrawler.go(11, 1, 'dummy_journals.db')
 
 import re
 import util
