@@ -39,12 +39,12 @@ def gender_by_country(df, author_min, show_graph = True):
         author_min (int)
         show_graph(bool)
     """
-    df_gc = df.groupby(['country']).size().to_frame('count').reset_index() 
-    countries_min = df_gc[df_gc['count'] > author_min].reset_index(drop=True)
-    df = df.reset_index(drop=True) 
+    df_count = df.groupby(['country']).size().to_frame('count').reset_index() 
+    countries_min = df_count[df_count['count'] > author_min].reset_index(drop = True)
+    df = df.reset_index(drop = True) 
 
-    df_10c = df.merge(countries_min['country'], on = 'country').reset_index(drop = True)
-    grpd = df_10c.groupby(['gender','country']).size().to_frame('count').reset_index()
+    df_minfiltered = df.merge(countries_min['country'], on = 'country').reset_index(drop = True)
+    grpd = df_minfiltered.groupby(['gender','country']).size().to_frame('count').reset_index()
 
     country_gender = grpd.groupby(['country', 'gender']).agg({'count':'sum'})
     country_pcts = country_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))

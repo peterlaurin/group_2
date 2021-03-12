@@ -1,5 +1,5 @@
 # CS122: Final Project
-# Web crawler for PLOS website
+# Web crawler for PLOS website to scrape authorship and paper data
 #
 # Lily Mansfield
 #
