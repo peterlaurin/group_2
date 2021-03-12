@@ -102,7 +102,7 @@ def gender_by_rank(df, show_graph = True):
     rank_pcts.rename(columns = {"count": "percent"}, inplace = True)
     rank_pcts.reset_index(inplace = True)
 
-    fig = px.bar(rank_pcts, x="rank", y="count", color="gender", title="Gender breakdown by rank")
+    fig = px.bar(rank_pcts, x="rank", y="percent", color="gender", title="Gender breakdown by rank")
     if show_graph:
         fig.show()
     
